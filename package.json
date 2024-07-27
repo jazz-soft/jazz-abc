@@ -14,8 +14,8 @@
   },
   "author": "jazz-soft (https://jazz-soft.net/)",
   "devDependencies": {
-    "eslint": "^9.7.0",
-    "mocha": "^10.6.0",
+    "eslint": "^9.8.0",
+    "mocha": "^10.7.0",
     "nyc": "^17.0.0"
   },
   "homepage": "https://github.com/jazz-soft/jazz-abc#readme",
