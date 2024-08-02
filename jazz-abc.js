@@ -6,9 +6,10 @@ function Parser(s) {
 }
 
 function Tokens(s, r, c, t) {
-  this.txt = s;
+  var i;
   if (s[1] == ':') {
     if (_isLetter(s[0])) t = s[0];
+    for (i = 2; i < s.length; i++) if (!_isSpace()) break;
   }
   return { r: r, c: c, x: s };
 }
@@ -20,6 +21,7 @@ function _isLetter(c) {
   c = c.charCodeAt(0);
   return c >= _A && c <= _Z || c >= _a && c <= _z;
 }
+function _isSpace(c) { return !!/\s/.test(c); }
 
 module.exports = {
   Parser: Parser
