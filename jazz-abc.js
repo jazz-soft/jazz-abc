@@ -15,8 +15,20 @@ function Tokens(s, l, c, t) {
   return [{ l: l, c: c, x: s }];
 }
 function _plain(s, l, c) {
-  var a, b;
-  
+  var a = [];
+  var i, k, q;
+  for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
+  if (i == s.length) return a;
+  for (k = i; k < s.length; k++) {
+    if (s[k] == '\\') q = !q;
+    if (s[k] == '%' && !q) {
+      a.push({ l: l, c: c + i, x: s.substring(i, k).trim() });
+      a.push({ l: l, c: c + k, t: '%', x: s.substring(k).trim() });
+      return a;
+    }
+  }
+  a.push({ l: l, c: c + i, x: s.substring(i).trim() });
+  return a;
 }
 var _A = 'A'.charCodeAt(0);
 var _Z = 'Z'.charCodeAt(0);
