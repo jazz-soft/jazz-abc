@@ -18,7 +18,7 @@ function equal(a, b) {
 
 describe('tokenize', function() {
   it('comment', function() {
-    var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc');
+    var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc\nB: %');
     //console.log(P.data);
     equal(P.data, [
       [ { l: 0, c: 0, t: 'N:', x: 'N:' } ],
@@ -28,7 +28,8 @@ describe('tokenize', function() {
         { l: 3, c: 3, x: 'ac \\\\' },
         { l: 3, c: 8, t: '%', x: '% c' }
       ],
-      [ { l: 4, c: 0, x: 'abc' } ]
+      [ { l: 4, c: 0, x: 'abc' } ],
+      [ { l: 5, c: 0, t: 'B:', x: 'B:' }, { l: 5, c: 3, t: '%', x: '%' } ]
     ]);
   });
 });
