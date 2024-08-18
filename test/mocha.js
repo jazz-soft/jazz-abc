@@ -20,7 +20,7 @@ describe('tokenize', function() {
   it('comment', function() {
     var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc\nB: %\nB:\\% \\%%\n');
     //console.log(P.data);
-    equal(P.data, [
+    equal(P.tokens, [
       [ { l: 0, c: 0, t: 'N:', x: 'N:' } ],
       [ { l: 1, c: 0, t: 'N:', x: 'N:' }, { l: 1, c: 2, x: 'ab' } ],
       [ { l: 2, c: 0, t: 'N:', x: 'N:' }, { l: 2, c: 3, x: 'ac \\% c' } ],
@@ -34,7 +34,7 @@ describe('tokenize', function() {
   it('pseudocomment', function() {
     var P = new Parser('%abc\n %abc\n%abc-2.1\n%abc %abc\n%abc-2.1%abc\n%%endtext %');
     //console.log(P.data);
-    equal(P.data, [
+    equal(P.tokens, [
       [ { l: 0, c: 0, t: '%:', x: '%abc' } ],
       [ { l: 1, c: 1, t: '%', x: '%abc' } ],
       [ { l: 2, c: 0, t: '%:', x: '%abc' }, { l: 2, c: 4, x: '-2.1' } ],
