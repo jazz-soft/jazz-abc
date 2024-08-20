@@ -1,16 +1,18 @@
 function Parser(s) {
   this.txt = s;
   this.tokens = [];
+  var state = {};
   var lines = s.split(/\r?\n|\r/);
-  for (var i = 0; i < lines.length; i++) this.tokens.push(new Tokens(lines[i], i, 0));
+  for (var i = 0; i < lines.length; i++) this.tokens.push(tokens(lines[i], i, 0, state));
 }
 
-function Tokens(s, l, c, t) {
+function tokens(s, l, c, t) {
   var i, a, x;
   if (s[1] == ':' && _isField(s[0])) {
     x = s.substring(0, 2);
-    if (s[0] != '+') t = s[0];
+    if (s[0] != '+') t.field = s[0];
     a = _chop(s.substring(2), l, c + 2);
+    if (t.field == 'K') a = _K(a, t);
     return [{ l: l, c: c, t: x, x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
@@ -50,6 +52,15 @@ function _percent(s, l, c) {
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
+
+function _K(a, t) {
+  if (!a.length || a[0].t == '%') return a;
+  var l = a[0].l;
+  var c = a[0].c;
+  var s = a[0].x;
+  return a;
+}
+
 var _A = 'A'.charCodeAt(0);
 var _Z = 'Z'.charCodeAt(0);
 var _a = 'a'.charCodeAt(0);
