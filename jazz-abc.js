@@ -12,7 +12,6 @@ function tokens(s, l, c, t) {
     x = s.substring(0, 2);
     if (s[0] != '+') t.field = s[0];
     a = _chop(s.substring(2), l, c + 2);
-    if (t.field == 'K') a = _K(a, t);
     return [{ l: l, c: c, t: x, x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
@@ -53,24 +52,92 @@ function _percent(s, l, c) {
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
 
-function _K(a, t) {
-  if (!a.length || a[0].t == '%') return a;
-  var l = a[0].l;
-  var c = a[0].c;
-  var s = a[0].x;
-  return a;
-}
-
 var _A = 'A'.charCodeAt(0);
+var _G = 'G'.charCodeAt(0);
 var _Z = 'Z'.charCodeAt(0);
 var _a = 'a'.charCodeAt(0);
 var _z = 'z'.charCodeAt(0);
+function _ABCDEFG(c) {
+  c = c ? c.charCodeAt(0) : 0;
+  return c >= _A && c <= _G;
+}
 function _isLetter(c) {
   c = c ? c.charCodeAt(0) : 0;
   return c >= _A && c <= _Z || c >= _a && c <= _z;
 }
 function _isField(c) { return c == '+' || _isLetter(c); }
 function _isSpace(c) { return !!/\s/.test(c); }
+
+Parser.prototype.pseudo = Parser.pseudo = function() {
+  return [
+    '%%MIDI',
+    '%%propagate-accidentals',
+    '%%writeout-accidentals',
+    '%%pageheight',
+    '%%pagewidth',
+    '%%topmargin',
+    '%%botmargin',
+    '%%leftmargin',
+    '%%rightmargin',
+    '%%indent',
+    '%%landscape',
+    '%%titlefont',
+    '%%subtitlefont',
+    '%%composerfont',
+    '%%partsfont',
+    '%%tempofont',
+    '%%gchordfont',
+    '%%annotationfont',
+    '%%infofont',
+    '%%textfont',
+    '%%vocalfont',
+    '%%wordsfont',
+    '%%setfont-1',
+    '%%setfont-2',
+    '%%setfont-3',
+    '%%setfont-4',
+    '%%topspace',
+    '%%titlespace',
+    '%%subtitlespace',
+    '%%composerspace',
+    '%%musicspace',
+    '%%partsspace',
+    '%%vocalspace',
+    '%%wordsspace',
+    '%%textspace',
+    '%%infospace',
+    '%%staffsep',
+    '%%sysstaffsep',
+    '%%barsperstaff',
+    '%%parskipfac',
+    '%%lineskipfac',
+    '%%stretchstaff',
+    '%%stretchlast',
+    '%%maxshrink',
+    '%%scale',
+    '%%measurefirst',
+    '%%barnumbers',
+    '%%measurenb',
+    '%%measurebox',
+    '%%setbarnb',
+    '%%text',
+    '%%center',
+    '%%begintext',
+    '%%endtext',
+    '%%writefields',
+    '%%sep',
+    '%%vskip',
+    '%%newpage',
+    '%%exprabove',
+    '%%exprbelow',
+    '%%graceslurs',
+    '%%infoline',
+    '%%oneperpage',
+    '%%vocalabove',
+    '%%freegchord',
+    '%%printtempo'
+  ];
+}
 
 module.exports = {
   Parser: Parser
