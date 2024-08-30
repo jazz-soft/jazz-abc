@@ -18,7 +18,7 @@ function tokens(s, l, c, t) {
   c += i;
   if (s[i] == '%') return _percent(s.substring(i), l, c);
   x = s.trim();
-  return x == '' ? [] : [{ l: l, c: c, x: s.trim() }];
+  return x == '' ? [] : [{ l: l, c: c, t: '??', x: s.trim() }];
 }
 function _chop(s, l, c) {
   var a = [];
