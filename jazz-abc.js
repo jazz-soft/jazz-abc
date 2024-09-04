@@ -12,7 +12,7 @@ function tokens(s, l, c, t) {
     x = s.substring(0, 2);
     if (s[0] != '+') t.field = s[0];
     a = _chop(s.substring(2), l, c + 2);
-    return [{ l: l, c: c, t: x, x: x }].concat(a);
+    return [{ l: l, c: c, t: x, h: t.field + ':', x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
   c += i;
@@ -43,10 +43,10 @@ function _percent(s, l, c) {
   if (!c) {
     if (s[1] == '%') {
       for (i = 2; i < s.length; i++) if (!_isLetter(s[i])) break;
-      return [{ l: l, c: c, t: '%%', x: s.substring(0, i) }].concat(_chop(s.substring(i), l, c + i));
+      return [{ l: l, c: c, t: '%%', h: s.substring(0, i), x: s.substring(0, i) }].concat(_chop(s.substring(i), l, c + i));
     }
     else if (s.startsWith('%abc') && !_isLetter(s[4])) {
-      return [{ l: l, c: c, t: '%:', x: '%abc' }].concat(_chop(s.substring(4), l, c + 4));
+      return [{ l: l, c: c, t: '%:', h: '%:', x: '%abc' }].concat(_chop(s.substring(4), l, c + 4));
     }
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];
@@ -177,6 +177,50 @@ Parser.prototype.fields = Parser.fields = function() {
   var a = [];
   for (var k of Object.keys(_fields)) a.push({ name: k, det: _fields[k].det });
   return a;
+}
+
+Parser.prototype.m2n = Parser.m2n = function(m, k) {
+  var n = m % 12;
+  var t = (m - n) / 12;
+  var i, s;
+  if (!k) {
+    s = ['C', '^C', 'D', '_E', 'E', 'F', '^F', 'G', '_A', 'A', '_B', 'B'][n];
+  }
+  if (t > 5) s = s.toLowerCase();
+  for (i = t; i < 5; i++) s += ',';
+  for (i = 6; i < t; i++) s += "'";
+  return s;
+}
+
+const _scale = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+Parser.prototype.n2m = Parser.n2m = function(s, k) {
+  var m, a, n, nn, o, t;
+  a = { '_': 1, '=': 2, '^': 3 }[s[0]];
+  if (a) {
+    n = s[1];
+    t = s.substring(2);
+    nn = n.toLowerCase();
+    m = _scale[nn];
+    if (!m) return;
+    m = m + a - 3;
+  }
+  else {
+    n = s[0];
+    t = s.substring(1);
+    nn = n.toLowerCase();
+    m = k ? k.scale[nn] : _scale[nn];
+    if (!m) return;
+    m = m - 1;
+  }
+  o = n == nn ? 6 : 5;
+  for (var i = 0; i < t.length; i++) {
+    if (t[i] == ',') o--;
+    else if (t[i] == "'") o++;
+    else return;
+  }
+  m += o * 12;
+  if (m < 0 || m > 127) return;
+  return m;
 }
 
 module.exports = {

@@ -21,26 +21,26 @@ describe('tokenize', function() {
     var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc\nB: %\nB:\\% \\%%\n');
     //console.log(P.tokens);
     equal(P.tokens, [
-      [ { l: 0, c: 0, t: 'N:', x: 'N:' } ],
-      [ { l: 1, c: 0, t: 'N:', x: 'N:' }, { l: 1, c: 2, x: 'ab' } ],
-      [ { l: 2, c: 0, t: 'N:', x: 'N:' }, { l: 2, c: 3, x: 'ac \\% c' } ],
-      [ { l: 3, c: 0, t: 'N:', x: 'N:' }, { l: 3, c: 3, x: 'ac \\\\' }, { l: 3, c: 8, t: '%', x: '% c' } ],
+      [ { l: 0, c: 0, t: 'N:', h: 'N:', x: 'N:' } ],
+      [ { l: 1, c: 0, t: 'N:', h: 'N:', x: 'N:' }, { l: 1, c: 2, x: 'ab' } ],
+      [ { l: 2, c: 0, t: 'N:', h: 'N:', x: 'N:' }, { l: 2, c: 3, x: 'ac \\% c' } ],
+      [ { l: 3, c: 0, t: 'N:', h: 'N:', x: 'N:' }, { l: 3, c: 3, x: 'ac \\\\' }, { l: 3, c: 8, t: '%', x: '% c' } ],
       [ { l: 4, c: 0, t: '??', x: 'abc' } ],
-      [ { l: 5, c: 0, t: 'B:', x: 'B:' }, { l: 5, c: 3, t: '%', x: '%' } ],
-      [ { l: 6, c: 0, t: 'B:', x: 'B:' }, { l: 6, c: 2, x: '\\% \\%' }, { l: 6, c: 7, t: '%', x: '%' } ],
+      [ { l: 5, c: 0, t: 'B:', h: 'B:', x: 'B:' }, { l: 5, c: 3, t: '%', x: '%' } ],
+      [ { l: 6, c: 0, t: 'B:', h: 'B:', x: 'B:' }, { l: 6, c: 2, x: '\\% \\%' }, { l: 6, c: 7, t: '%', x: '%' } ],
       [ ]
     ]);
   });
   it('pseudocomment', function() {
     var P = new Parser('%abc\n %abc\n%abc-2.1\n%abc %abc\n%abc-2.1%abc\n%%endtext %');
-    //console.log(P.data);
+    //console.log(P.tokens);
     equal(P.tokens, [
-      [ { l: 0, c: 0, t: '%:', x: '%abc' } ],
+      [ { l: 0, c: 0, t: '%:', h: '%:', x: '%abc' } ],
       [ { l: 1, c: 1, t: '%', x: '%abc' } ],
-      [ { l: 2, c: 0, t: '%:', x: '%abc' }, { l: 2, c: 4, x: '-2.1' } ],
-      [ { l: 3, c: 0, t: '%:', x: '%abc' }, { l: 3, c: 5, t: '%', x: '%abc' } ],
-      [ { l: 4, c: 0, t: '%:', x: '%abc' }, { l: 4, c: 4, x: '-2.1' }, { l: 4, c: 8, t: '%', x: '%abc' } ],
-      [ { l: 5, c: 0, t: '%%', x: '%%endtext' }, { l: 5, c: 10, t: '%', x: '%' } ]
+      [ { l: 2, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 2, c: 4, x: '-2.1' } ],
+      [ { l: 3, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 3, c: 5, t: '%', x: '%abc' } ],
+      [ { l: 4, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 4, c: 4, x: '-2.1' }, { l: 4, c: 8, t: '%', x: '%abc' } ],
+      [ { l: 5, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 5, c: 10, t: '%', x: '%' } ]
     ]);
   });
 });
