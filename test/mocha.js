@@ -44,3 +44,50 @@ describe('tokenize', function() {
     ]);
   });
 });
+
+describe('key', function() {
+  it('C', function() {
+    var k = new Parser.Key();
+    equal(k.scale, { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 });
+  });
+  it('D', function() {
+    var k = new Parser.Key(2);
+    equal(k.scale, { c: 4, d: 5, e: 7, f: 9, g: 10, a: 12, b: 14 });
+  });
+  it('F', function() {
+    var k = new Parser.Key(-1);
+    equal(k.scale, { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 13 });
+  });
+  it('G', function() {
+    var k = new Parser.Key(1);
+    equal(k.scale, { c: 3, d: 5, e: 7, f: 9, g: 10, a: 12, b: 14 });
+  });
+  it('Bb', function() {
+    var k = new Parser.Key(-2);
+    equal(k.scale, { c: 3, d: 5, e: 6, f: 8, g: 10, a: 12, b: 13 });
+  });
+});
+
+describe('midi', function() {
+  it('m2n', function() {
+    assert.equal(Parser.m2n(25), "^C,,,");
+    assert.equal(Parser.m2n(37), "^C,,");
+    assert.equal(Parser.m2n(49), "^C,");
+    assert.equal(Parser.m2n(61), "^C");
+    assert.equal(Parser.m2n(73), "^c");
+    assert.equal(Parser.m2n(85), "^c'");
+    assert.equal(Parser.m2n(97), "^c''");
+    assert.equal(Parser.m2n(109), "^c'''");
+  });
+  it('n2m', function() {
+    assert.equal(Parser.n2m("C,,,,,,"), undefined);
+    assert.equal(Parser.n2m("_C,,,,,"), undefined);
+    assert.equal(Parser.n2m("C,,,,,"), 0);
+    assert.equal(Parser.n2m("C"), 60);
+    assert.equal(Parser.n2m("^C"), 61);
+    assert.equal(Parser.n2m("c"), 72);
+    assert.equal(Parser.n2m("c''''"), 120);
+    assert.equal(Parser.n2m("g''''"), 127);
+    assert.equal(Parser.n2m("^g''''"), undefined);
+  });
+});

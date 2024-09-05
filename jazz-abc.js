@@ -192,7 +192,8 @@ Parser.prototype.m2n = Parser.m2n = function(m, k) {
   return s;
 }
 
-const _scale = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+const _notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];
+const _scale = { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 };  // MIDI + 3 to allow Cbb
 Parser.prototype.n2m = Parser.n2m = function(s, k) {
   var m, a, n, nn, o, t;
   a = { '_': 1, '=': 2, '^': 3 }[s[0]];
@@ -202,7 +203,7 @@ Parser.prototype.n2m = Parser.n2m = function(s, k) {
     nn = n.toLowerCase();
     m = _scale[nn];
     if (!m) return;
-    m = m + a - 3;
+    m = m + a - 5;
   }
   else {
     n = s[0];
@@ -210,7 +211,7 @@ Parser.prototype.n2m = Parser.n2m = function(s, k) {
     nn = n.toLowerCase();
     m = k ? k.scale[nn] : _scale[nn];
     if (!m) return;
-    m = m - 1;
+    m = m - 3;
   }
   o = n == nn ? 6 : 5;
   for (var i = 0; i < t.length; i++) {
@@ -222,6 +223,28 @@ Parser.prototype.n2m = Parser.n2m = function(s, k) {
   if (m < 0 || m > 127) return;
   return m;
 }
+
+function Key(n) {
+  var i, k, m;
+  this.scale = {};
+  for (k of _notes) this.scale[k] = _scale[k];
+  if (n > 0) {
+    m = 3;
+    for (i = 0; i < n; i++) {
+      this.scale[_notes[m]]++;
+      m = (m + 4) % 7;
+    }
+  }
+  else if (n < 0) {
+    m = 6;
+    for (i = 0; i < -n; i++) {
+      this.scale[_notes[m]]--;
+      m = (m + 3) % 7;
+    }
+  }
+}
+
+Parser.prototype.Key = Parser.Key = Key;
 
 module.exports = {
   Parser: Parser
