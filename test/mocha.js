@@ -90,4 +90,16 @@ describe('midi', function() {
     assert.equal(Parser.n2m("g''''"), 127);
     assert.equal(Parser.n2m("^g''''"), undefined);
   });
+  it('m2n/n2m', function() {
+    var m, k;
+    for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m)));
+    k = new Parser.Key(2);
+    for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m, k), k));
+    k = new Parser.Key(7);
+    for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m, k), k));
+    k = new Parser.Key(-2);
+    for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m, k), k));
+    k = new Parser.Key(-7);
+    for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m, k), k));
+  });
 });

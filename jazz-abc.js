@@ -179,21 +179,30 @@ Parser.prototype.fields = Parser.fields = function() {
   return a;
 }
 
+const _notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];
+const _scale = { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 };  // MIDI + 3 to allow Cbb
 Parser.prototype.m2n = Parser.m2n = function(m, k) {
   var n = m % 12;
-  var t = (m - n) / 12;
-  var i, s;
-  if (!k) {
-    s = ['C', '^C', 'D', '_E', 'E', 'F', '^F', 'G', '_A', 'A', '_B', 'B'][n];
+  var i, c, s;
+  var sc = k ? k.scale : _scale;
+  var sh = k ? k.sharps : 0;
+  for (c of _notes) if (n + 3 == sc[c]) {
+    m += _scale[c] - sc[c];
+    n = m % 12;
+    s = c;
+    break;
   }
-  if (t > 5) s = s.toLowerCase();
+  if (!s) s = ['=c', 0, '=d', 0, '=e', '=f', 0, '=g', 0, '=a', 0, '=b'][n];
+  if (!s) s = Math.abs([0, 2, 0, 4, 0, 0, 1, 0, 3, 0, 5][n] - sh) > Math.abs([0, 4, 0, 2, 0, 0, 5, 0, 3, 0, 1][n] + sh) ?
+          [0, '_d', 0, '_e', 0, 0, '_g', 0, '_a', 0, '_b'][n] :
+          [0, '^c', 0, '^d', 0, 0, '^f', 0, '^g', 0, '^a'][n];
+  var t = (m - n) / 12;
+  if (t < 6) s = s.toUpperCase();
   for (i = t; i < 5; i++) s += ',';
   for (i = 6; i < t; i++) s += "'";
   return s;
 }
 
-const _notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];
-const _scale = { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 };  // MIDI + 3 to allow Cbb
 Parser.prototype.n2m = Parser.n2m = function(s, k) {
   var m, a, n, nn, o, t;
   a = { '_': 1, '=': 2, '^': 3 }[s[0]];
@@ -226,6 +235,7 @@ Parser.prototype.n2m = Parser.n2m = function(s, k) {
 
 function Key(n) {
   var i, k, m;
+  this.sharps= n;
   this.scale = {};
   for (k of _notes) this.scale[k] = _scale[k];
   if (n > 0) {
