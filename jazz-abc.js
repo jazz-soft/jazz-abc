@@ -10,8 +10,12 @@ function tokens(s, l, c, t) {
   var i, a, x;
   if (s[1] == ':' && _isField(s[0])) {
     x = s.substring(0, 2);
-    if (s[0] != '+') t.field = s[0];
+    if (s[0] != '+') {
+      t.field = s[0];
+      t.reader = { K: reader_k_tonic }[s[0]];
+    }
     a = _chop(s.substring(2), l, c + 2);
+    if (t.reader && a.length && a[0].t != '%') a = t.reader(a[0], t).concat(a.slice(1));
     return [{ l: l, c: c, t: x, h: t.field + ':', x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
@@ -52,6 +56,67 @@ function _percent(s, l, c) {
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
 
+function reader_k_tonic(x, t) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n, w;
+  if (_ABCDEFG(s[0])) {
+    if (s[1] == '#' || s[1] == 'b') {
+      a.push({ l: l, c: c, t: 'Kt', x: s.substring(0, 2) });
+      n = 2;
+    }
+    else {
+      a.push({ l: l, c: c, t: 'Kt', x: s[0] });
+      n = 1;
+    }
+    t.reader = reader_k_mode;
+  }
+  else {
+    for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+    w = s.substring(0, n);
+    if (w == 'none' || w == 'HP' || w == 'Hp') {
+      a.push({ l: l, c: c, t: 'Kt', x: w });
+      t.reader = reader_k_acc;
+    }
+    else {
+      a.push({ l: l, c: c, x: w });
+      t.reader = undefined;
+    }
+  }
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  return a;
+}
+function reader_k_mode(x, t) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n, w;
+  for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+  w = s.substring(0, n);
+  if (_isMode(w)) {
+    a.push({ l: l, c: c, t: 'Km', x: w });
+  }
+  else n = 0;
+  t.reader = reader_k_acc;
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a = a.concat(t.reader({ l: l, c: c + n, x: s.substring(n) }, t));
+  return a;
+}
+function reader_k_acc(x, t) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n, w;
+  for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+  w = s.substring(0, n);
+  if (w.match(/^(__?|=|\^\^?)[a-g]$/)) {
+    a.push({ l: l, c: c, t: 'Ka', x: w });
+  }
+  else {
+    a.push({ l: l, c: c, x: w });
+    t.reader = undefined;
+  }
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  return a;
+}
+
 var _A = 'A'.charCodeAt(0);
 var _G = 'G'.charCodeAt(0);
 var _Z = 'Z'.charCodeAt(0);
@@ -67,6 +132,16 @@ function _isLetter(c) {
 }
 function _isField(c) { return c == '+' || _isLetter(c); }
 function _isSpace(c) { return !!/\s/.test(c); }
+
+const _mode = { major: 0, minor: -3, ionian: 0, aeolian: -3, mixolydian: -1, dorian: -2, phrygian: -4, lydian: 1, locrian: 5 };
+const _modes = Object.keys(_mode);
+function _isMode(s) {
+  if (s == 'm') return true;
+  if (s.length < 3) return false;
+  s = s.toLowerCase();
+  for (var m of _modes) if (m.startsWith(s)) return true;
+  return false;
+}
 
 const _pseudo = {
   MIDI: {},

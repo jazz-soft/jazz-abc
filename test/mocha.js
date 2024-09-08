@@ -46,6 +46,27 @@ describe('tokenize', function() {
 });
 
 describe('key', function() {
+  it('K: ...', function() {
+    var P = new Parser('K: Cb majOr ^d ... % ...');
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+      { l: 0, c: 3, t: 'Kt', x: 'Cb' },
+      { l: 0, c: 6, t: 'Km', x: 'majOr' },
+      { l: 0, c: 12, t: 'Ka', x: '^d' },
+      { l: 0, c: 15, x: '...' },
+      { l: 0, c: 19, t: '%', x: '% ...' }
+    ]]);
+  });
+  it('K: +: ...', function() {
+    var P = new Parser('K:\n+:Cb\n+:^d');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' } ],
+      [ { l: 1, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 1, c: 2, t: 'Kt', x: 'Cb' } ],
+      [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Ka', x: '^d' } ]
+    ]);
+  });
   it('C', function() {
     var k = new Parser.Key();
     equal(k.scale, { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 });
