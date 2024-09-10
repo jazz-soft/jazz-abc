@@ -14,6 +14,8 @@ function tokens(s, l, c, t) {
       t.field = s[0];
       t.reader = { K: reader_k_tonic }[s[0]];
     }
+    if (s[0] == 'X') t.context = 'X';
+    if (s[0] == 'K' && t.context == 'X') t.context = 'T';
     a = _chop(s.substring(2), l, c + 2);
     if (t.reader && a.length && a[0].t != '%') a = t.reader(a[0], t).concat(a.slice(1));
     return [{ l: l, c: c, t: x, h: t.field + ':', x: x }].concat(a);
@@ -22,7 +24,35 @@ function tokens(s, l, c, t) {
   c += i;
   if (s[i] == '%') return _percent(s.substring(i), l, c);
   x = s.trim();
-  return x == '' ? [] : [{ l: l, c: c, t: '??', x: s.trim() }];
+  if (x == '') {
+    t.context = undefined;
+    return [];
+  }
+  return t.context == 'T' ? _tune(x, l, c) : [{ l: l, c: c, t: '??', x: x }];
+}
+function _tune(s, l, c) {
+  var a = [];
+  var n, k;
+  n = 0;
+  while (n < s.length) {
+    if (_isNote(s[n])) {
+      for (k = n + 1; k < s.length; k++) if (s[k] != ',' && s[k] != "'") break;
+      a.push({ l: l, c: n + c, t: 'note', x: s.substring(n, k) });
+      n = k;
+      continue;
+    }
+    else if ((s[n] == '^' || s[n] == '=' || s[n] == '_') && _isNote(s[n + 1])) {
+      for (k = n + 2; k < s.length; k++) if (s[k] != ',' && s[k] != "'") break;
+      a.push({ l: l, c: n + c, t: 'note', x: s.substring(n, k) });
+      n = k;
+      continue;
+    }
+    else {
+      a.push({ l: l, c: n + c, x: s[n] });
+      n++;
+    }
+  }
+  return a;
 }
 function _chop(s, l, c) {
   var a = [];
@@ -130,6 +160,7 @@ function _isLetter(c) {
   c = c ? c.charCodeAt(0) : 0;
   return c >= _A && c <= _Z || c >= _a && c <= _z;
 }
+function _isNote(c) { return c ? _ABCDEFG(c.toUpperCase()) : false; }
 function _isField(c) { return c == '+' || _isLetter(c); }
 function _isSpace(c) { return !!/\s/.test(c); }
 
