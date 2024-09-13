@@ -12,7 +12,7 @@ function tokens(s, l, c, t) {
     x = s.substring(0, 2);
     if (s[0] != '+') {
       t.field = s[0];
-      t.reader = { K: reader_k_tonic }[s[0]];
+      t.reader = { K: reader_K_tonic, U: reader_U_left, m: reader_m_left }[s[0]];
     }
     if (s[0] == 'X') t.context = 'X';
     if (s[0] == 'K' && t.context == 'X') t.context = 'T';
@@ -86,7 +86,7 @@ function _percent(s, l, c) {
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
 
-function reader_k_tonic(x, t) {
+function reader_K_tonic(x, t) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   if (_ABCDEFG(s[0])) {
@@ -98,14 +98,14 @@ function reader_k_tonic(x, t) {
       a.push({ l: l, c: c, t: 'Kt', x: s[0] });
       n = 1;
     }
-    t.reader = reader_k_mode;
+    t.reader = reader_K_mode;
   }
   else {
     for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
     w = s.substring(0, n);
     if (w == 'none' || w == 'HP' || w == 'Hp') {
       a.push({ l: l, c: c, t: 'Kt', x: w });
-      t.reader = reader_k_acc;
+      t.reader = reader_K_acc;
     }
     else {
       a.push({ l: l, c: c, x: w });
@@ -116,7 +116,7 @@ function reader_k_tonic(x, t) {
   if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
-function reader_k_mode(x, t) {
+function reader_K_mode(x, t) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
@@ -125,12 +125,12 @@ function reader_k_mode(x, t) {
     a.push({ l: l, c: c, t: 'Km', x: w });
   }
   else n = 0;
-  t.reader = reader_k_acc;
+  t.reader = reader_K_acc;
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
   if (n < s.length) a = a.concat(t.reader({ l: l, c: c + n, x: s.substring(n) }, t));
   return a;
 }
-function reader_k_acc(x, t) {
+function reader_K_acc(x, t) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
@@ -147,14 +147,87 @@ function reader_k_acc(x, t) {
   return a;
 }
 
+function reader_U_left(x, t) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n, w;
+  if (_HW(s[0]) || s[0] == '~') {
+    a.push({ l: l, c: c, t: 'Ul', x: s[0] });
+    n = 1;
+    t.reader = reader_U_eq;
+  }
+  else {
+    for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+    w = s.substring(0, n);
+    a.push({ l: l, c: c, x: w });
+    t.reader = undefined;
+  }
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  return a;
+}
+const reader_U_right = reader_rest('Ur');
+const reader_U_eq = reader_char('=', reader_U_right);
+
+function reader_m_left(x, t) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n, w;
+  for (n = 0; n < s.length; n++) if (_isSpace(s[n]) || s[n] == '=') break;
+  if (n) {
+    w = s.substring(0, n);
+    a.push({ l: l, c: c, t: 'ml', x: w });
+    t.reader = reader_m_eq;
+  }
+  else t.reader = undefined;
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  return a;
+}
+const reader_m_right = reader_rest('mr');
+const reader_m_eq = reader_char('=', reader_m_right);
+
+function reader_char(ch, nxt) {
+  return function(x, t) {
+    var a = [], s = x.x, l = x.l, c = x.c;
+    var n, w;
+    if (s[0] == ch) {
+      a.push({ l: l, c: c, t: ch, x: ch });
+      n = 1;
+      t.reader = nxt;
+    }
+    else {
+      for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+      w = s.substring(0, n);
+      a.push({ l: l, c: c, x: w });
+      t.reader = undefined;
+    }
+    for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+    if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+    return a;
+  };
+}
+function reader_rest(tt, nxt) {
+  return function(x, t) {
+    t.reader = nxt;
+    return [{ l: x.l, c: x.c, t: tt, x: x.x.trim() }];
+  };
+}
+
 var _A = 'A'.charCodeAt(0);
 var _G = 'G'.charCodeAt(0);
+var _H = 'H'.charCodeAt(0);
+var _W = 'W'.charCodeAt(0);
 var _Z = 'Z'.charCodeAt(0);
 var _a = 'a'.charCodeAt(0);
+var _h = 'h'.charCodeAt(0);
+var _w = 'w'.charCodeAt(0);
 var _z = 'z'.charCodeAt(0);
 function _ABCDEFG(c) {
   c = c ? c.charCodeAt(0) : 0;
   return c >= _A && c <= _G;
+}
+function _HW(c) {
+  c = c ? c.charCodeAt(0) : 0;
+  return c >= _H && c <= _W || c >= _h && c <= _w;
 }
 function _isLetter(c) {
   c = c ? c.charCodeAt(0) : 0;
@@ -271,6 +344,19 @@ const _fields = {
   w: { det: 'words' },
   X: { det: 'reference number' },
   Z: { det: 'transcription' }
+};
+
+const _symbol = {
+  '~': '!roll!',
+  H: '!fermata!',
+  L: '!accent!',
+  M: '!lowermordent!',
+  O: '!coda!',
+  P: '!uppermordent!',
+  S: '!segno!',
+  T: '!trill!',
+  u: '!upbow!',
+  v: '!downbow!'
 };
 
 Parser.prototype.pseudo = Parser.pseudo = function() {
