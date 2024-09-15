@@ -1,34 +1,43 @@
 function Parser(s) {
   this.txt = s;
   this.tokens = [];
+  this.lines = [];
   var state = {};
-  var lines = s.split(/\r?\n|\r/);
-  for (var i = 0; i < lines.length; i++) this.tokens.push(tokens(lines[i], i, 0, state));
+  var all = s.split(/\r?\n|\r/);
+  var i, tt;
+  for (i = 0; i < all.length; i++) {
+    tt = tokens(all[i], i, 0, state);
+    this.tokens.push(tt);
+    this.lines.push(collect(tt, state));
+  }
 }
 
-function tokens(s, l, c, t) {
+function collect(tt, q) {
+}
+
+function tokens(s, l, c, q) {
   var i, a, x;
   if (s[1] == ':' && _isField(s[0])) {
     x = s.substring(0, 2);
     if (s[0] != '+') {
-      t.field = s[0];
-      t.reader = { K: reader_K_tonic, U: reader_U_left, m: reader_m_left }[s[0]];
+      q.field = s[0];
+      q.reader = { K: reader_K_tonic, U: reader_U_left, m: reader_m_left }[s[0]];
     }
-    if (s[0] == 'X') t.context = 'X';
-    if (s[0] == 'K' && t.context == 'X') t.context = 'T';
+    if (s[0] == 'X') q.context = 'X';
+    if (s[0] == 'K' && q.context == 'X') q.context = 'T';
     a = _chop(s.substring(2), l, c + 2);
-    if (t.reader && a.length && a[0].t != '%') a = t.reader(a[0], t).concat(a.slice(1));
-    return [{ l: l, c: c, t: x, h: t.field + ':', x: x }].concat(a);
+    if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
+    return [{ l: l, c: c, t: x, h: q.field + ':', x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
   c += i;
   if (s[i] == '%') return _percent(s.substring(i), l, c);
   x = s.trim();
   if (x == '') {
-    t.context = undefined;
+    q.context = undefined;
     return [];
   }
-  return t.context == 'T' ? _tune(x, l, c) : [{ l: l, c: c, t: '??', x: x }];
+  return q.context == 'T' ? _tune(x, l, c) : [{ l: l, c: c, t: '??', x: x }];
 }
 function _tune(s, l, c) {
   var a = [];
@@ -86,7 +95,7 @@ function _percent(s, l, c) {
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
 
-function reader_K_tonic(x, t) {
+function reader_K_tonic(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   if (_ABCDEFG(s[0])) {
@@ -98,25 +107,25 @@ function reader_K_tonic(x, t) {
       a.push({ l: l, c: c, t: 'Kt', x: s[0] });
       n = 1;
     }
-    t.reader = reader_K_mode;
+    q.reader = reader_K_mode;
   }
   else {
     for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
     w = s.substring(0, n);
     if (w == 'none' || w == 'HP' || w == 'Hp') {
       a.push({ l: l, c: c, t: 'Kt', x: w });
-      t.reader = reader_K_acc;
+      q.reader = reader_K_acc;
     }
     else {
       a.push({ l: l, c: c, x: w });
-      t.reader = undefined;
+      q.reader = undefined;
     }
   }
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
-function reader_K_mode(x, t) {
+function reader_K_mode(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
@@ -125,12 +134,12 @@ function reader_K_mode(x, t) {
     a.push({ l: l, c: c, t: 'Km', x: w });
   }
   else n = 0;
-  t.reader = reader_K_acc;
+  q.reader = reader_K_acc;
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a = a.concat(t.reader({ l: l, c: c + n, x: s.substring(n) }, t));
+  if (n < s.length) a = a.concat(q.reader({ l: l, c: c + n, x: s.substring(n) }, q));
   return a;
 }
-function reader_K_acc(x, t) {
+function reader_K_acc(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
@@ -140,74 +149,74 @@ function reader_K_acc(x, t) {
   }
   else {
     a.push({ l: l, c: c, x: w });
-    t.reader = undefined;
+    q.reader = undefined;
   }
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
 
-function reader_U_left(x, t) {
+function reader_U_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   if (_HW(s[0]) || s[0] == '~') {
     a.push({ l: l, c: c, t: 'Ul', x: s[0] });
     n = 1;
-    t.reader = reader_U_eq;
+    q.reader = reader_U_eq;
   }
   else {
     for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
     w = s.substring(0, n);
     a.push({ l: l, c: c, x: w });
-    t.reader = undefined;
+    q.reader = undefined;
   }
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
 const reader_U_right = reader_rest('Ur');
 const reader_U_eq = reader_char('=', reader_U_right);
 
-function reader_m_left(x, t) {
+function reader_m_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n]) || s[n] == '=') break;
   if (n) {
     w = s.substring(0, n);
     a.push({ l: l, c: c, t: 'ml', x: w });
-    t.reader = reader_m_eq;
+    q.reader = reader_m_eq;
   }
-  else t.reader = undefined;
+  else q.reader = undefined;
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+  if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
 const reader_m_right = reader_rest('mr');
 const reader_m_eq = reader_char('=', reader_m_right);
 
 function reader_char(ch, nxt) {
-  return function(x, t) {
+  return function(x, q) {
     var a = [], s = x.x, l = x.l, c = x.c;
     var n, w;
     if (s[0] == ch) {
       a.push({ l: l, c: c, t: ch, x: ch });
       n = 1;
-      t.reader = nxt;
+      q.reader = nxt;
     }
     else {
       for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
       w = s.substring(0, n);
       a.push({ l: l, c: c, x: w });
-      t.reader = undefined;
+      q.reader = undefined;
     }
     for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-    if (n < s.length) a = a.concat(t.reader ? t.reader({ l: l, c: c + n, x: s.substring(n) }, t) : [{ l: l, c: c + n, x: s.substring(n) }]);
+    if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
     return a;
   };
 }
 function reader_rest(tt, nxt) {
-  return function(x, t) {
-    t.reader = nxt;
+  return function(x, q) {
+    q.reader = nxt;
     return [{ l: x.l, c: x.c, t: tt, x: x.x.trim() }];
   };
 }
