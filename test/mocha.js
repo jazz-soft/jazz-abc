@@ -15,6 +15,7 @@ function equal(a, b) {
   }
   else assert.equal(a, b);
 }
+function _equal() {}
 
 describe('tokenize', function() {
   it('comment', function() {
@@ -96,26 +97,43 @@ describe('macro', function() {
 
 describe('key', function() {
   it('K: ...', function() {
-    var P = new Parser('K: Cb majOr ^d ... % ...');
+    var P = new Parser('K: % no key\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: Key' },
+      { l: 0, c: 3, t: '%', x: '% no key' }
+    ], []]);
+    P = new Parser('K: no key\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+      { l: 0, c: 3, x: 'no', e: 'expected: Key' },
+      { l: 0, c: 6, x: 'key' }
+    ], []]);
+    P = new Parser('K: Ab err\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+      { l: 0, c: 3, t: 'Kt', x: 'Ab' },
+      { l: 0, c: 6, x: 'err', e: 'unexpected token' }
+    ], []]);
+    P = new Parser('K: Cb majOr ^d ... % ...\n');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
       { l: 0, c: 3, t: 'Kt', x: 'Cb' },
       { l: 0, c: 6, t: 'Km', x: 'majOr' },
       { l: 0, c: 12, t: 'Ka', x: '^d' },
-      { l: 0, c: 15, x: '...' },
+      { l: 0, c: 15, x: '...', e: 'unexpected token' },
       { l: 0, c: 19, t: '%', x: '% ...' }
-    ]]);
-    P = new Parser('K:\n+:Cb\n+:^d');
+    ], []]);
+    P = new Parser('K:\n+:Cb\n+:^d\n');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' } ],
       [ { l: 1, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 1, c: 2, t: 'Kt', x: 'Cb' } ],
-      [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Ka', x: '^d' } ]
+      [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Ka', x: '^d' } ], []
     ]);
-    P = new Parser('K: error');
-    //console.log(P.tokens);
-    equal(P.tokens, [[ { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' }, { l: 0, c: 3, x: 'error' } ]]);
   });
   it('C', function() {
     var k = new Parser.Key();

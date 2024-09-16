@@ -11,8 +11,23 @@ function Parser(s) {
     this.lines.push(collect(tt, state));
   }
 }
-
+const _readers = { 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
+const _assemble = { 'K:': assemble_K };
 function collect(tt, q) {
+  var t, x;
+  if (!tt.length) flush(q);
+  else {
+    t = tt[0].t;
+    if (t != '+:' && t[0] != '%') flush(q);
+    if (!q.ass && _assemble[t]) q.ass = [];
+    if (q.ass) for (x of tt) if (!x.t || x.t != '+:' && x.t[0] != '%') q.ass.push(x);
+  }
+}
+function flush(q) {
+  if (!q.ass) return;
+  var fn = _assemble[q.ass[0].t];
+  if (fn) fn(q);
+  q.ass = undefined;
 }
 
 function tokens(s, l, c, q) {
@@ -21,7 +36,7 @@ function tokens(s, l, c, q) {
     x = s.substring(0, 2);
     if (s[0] != '+') {
       q.field = s[0];
-      q.reader = { K: reader_K_tonic, U: reader_U_left, m: reader_m_left }[s[0]];
+      q.reader = _readers[x];
     }
     if (s[0] == 'X') q.context = 'X';
     if (s[0] == 'K' && q.context == 'X') q.context = 'T';
@@ -95,6 +110,40 @@ function _percent(s, l, c) {
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
 
+// K: ...
+function assemble_K(q) {
+  var a = q.ass;
+  var n, t, m;
+  console.log('assemble_K:', q.ass);
+  if (a.length < 2) {
+    a[0].e = 'expected: Key';
+    return;
+  }
+  if (a[1].t != 'Kt') {
+    a[1].e = 'expected: Key';
+    return;
+  }
+  t = a[1].x;
+  n = 2;
+  if (a.length > 2 && a[2].t == 'Km') {
+    m = a[2].x;
+    n = 3;
+  }
+  m = sharps(t, m);
+  if (m < -7) {
+    a[1].e = 'too many flats';
+    a[2].e = 'too many flats';
+    return;
+  }
+  if (m > 7) {
+    a[1].e = 'too many sharps';
+    a[2].e = 'too many sharps';
+    return;
+  }
+  for (; n < a.length; n++) {
+    if (a[n].t != 'Ka') a[n].e = 'unexpected token';
+  }
+}
 function reader_K_tonic(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
@@ -156,6 +205,7 @@ function reader_K_acc(x, q) {
   return a;
 }
 
+// U: ...
 function reader_U_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
@@ -177,6 +227,7 @@ function reader_U_left(x, q) {
 const reader_U_right = reader_rest('Ur');
 const reader_U_eq = reader_char('=', reader_U_right);
 
+// m: ...
 function reader_m_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
@@ -432,6 +483,17 @@ Parser.prototype.n2m = Parser.n2m = function(s, k) {
   m += o * 12;
   if (m < 0 || m > 127) return;
   return m;
+}
+
+const _sharps = { major: 0, ionian: 0, minor: -3, aeolian: -3, mixolydian: -1, dorian: -2, phrygian: -4, lydian: 1, locrian: -5 };
+function sharps(t, m) {
+  var n = { cb: 1, gb: 2, db: 3, ab: 4, eb: 5, bb: 6, f: 7, c: 8, none: 8, g: 9, d: 10, hp: 10, a: 11, e: 12, b: 13, 'f#': 14, 'c#': 15 }[t.toLowerCase()] - 8;
+  if (m) {
+    m = m.toLowerCase();
+    if (m == 'm') return n - 3;
+    for (var k of Object.keys(_sharps)) if (k.startsWith(m)) return n + _sharps[k];
+  }
+  return n;
 }
 
 function Key(n) {
