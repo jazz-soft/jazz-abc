@@ -17,7 +17,7 @@ function collect(tt, q) {
   var t, x;
   if (!tt.length) flush(q);
   else {
-    t = tt[0].t;
+    t = tt[0].t || '';
     if (t != '+:' && t[0] != '%') flush(q);
     if (!q.ass && _assemble[t]) q.ass = [];
     if (q.ass) for (x of tt) if (!x.t || x.t != '+:' && x.t[0] != '%') q.ass.push(x);
@@ -114,7 +114,6 @@ function _percent(s, l, c) {
 function assemble_K(q) {
   var a = q.ass;
   var n, t, m;
-  console.log('assemble_K:', q.ass);
   if (a.length < 2) {
     a[0].e = 'expected: Key';
     return;
