@@ -100,14 +100,14 @@ describe('key', function() {
     var P = new Parser('K: % no key\n');
     //console.log(P.tokens);
     equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: Key' },
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: key' },
       { l: 0, c: 3, t: '%', x: '% no key' }
     ], []]);
     P = new Parser('K: no key\n');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
-      { l: 0, c: 3, x: 'no', e: 'expected: Key' },
+      { l: 0, c: 3, x: 'no', e: 'expected: key' },
       { l: 0, c: 6, x: 'key' }
     ], []]);
     P = new Parser('K: Ab err\n');
