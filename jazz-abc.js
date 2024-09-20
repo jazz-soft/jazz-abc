@@ -12,7 +12,7 @@ function Parser(s) {
   }
 }
 const _readers = { 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
-const _assemble = { 'K:': assemble_K };
+const _assemble = { 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
 function collect(tt, q) {
   var t, x;
   if (!tt.length) flush(q);
@@ -115,11 +115,11 @@ function assemble_K(q) {
   var a = q.ass;
   var n, t, m;
   if (a.length < 2) {
-    a[0].e = 'expected: Key';
+    a[0].e = 'expected: key';
     return;
   }
   if (a[1].t != 'Kt') {
-    a[1].e = 'expected: Key';
+    a[1].e = 'expected: key';
     return;
   }
   t = a[1].x;
@@ -140,7 +140,10 @@ function assemble_K(q) {
     return;
   }
   for (; n < a.length; n++) {
-    if (a[n].t != 'Ka') a[n].e = 'unexpected token';
+    if (a[n].t != 'Ka') {
+      a[n].e = 'unexpected token';
+      return;
+    }
   }
 }
 function reader_K_tonic(x, q) {
@@ -205,6 +208,29 @@ function reader_K_acc(x, q) {
 }
 
 // U: ...
+function assemble_U(q) {
+  var a = q.ass;
+  if (a.length < 2) {
+    a[0].e = 'expected: definition';
+    return;
+  }
+  if (a[1].t != 'Ul') {
+    a[1].e = 'unexpected token';
+    return;
+  }
+  if (a.length < 3) {
+    a[1].e = 'incomplete definition';
+    return;
+  }
+  if (a[2].t != '=') {
+    a[2].e = 'unexpected token';
+    return;
+  }
+  if (a.length < 4) {
+    a[3].e = 'incomplete definition';
+    return;
+  }
+}
 function reader_U_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
@@ -227,6 +253,29 @@ const reader_U_right = reader_rest('Ur');
 const reader_U_eq = reader_char('=', reader_U_right);
 
 // m: ...
+function assemble_m(q) {
+  var a = q.ass;
+  if (a.length < 2) {
+    a[0].e = 'expected: macro';
+    return;
+  }
+  if (a[1].t != 'ml') {
+    a[1].e = 'unexpected token';
+    return;
+  }
+  if (a.length < 3) {
+    a[1].e = 'incomplete macro';
+    return;
+  }
+  if (a[2].t != '=') {
+    a[2].e = 'unexpected token';
+    return;
+  }
+  if (a.length < 4) {
+    a[3].e = 'incomplete macro';
+    return;
+  }
+}
 function reader_m_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n, w;
