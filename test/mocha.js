@@ -48,50 +48,50 @@ describe('tokenize', function() {
 
 describe('macro', function() {
   it('U: ...', function() {
-    var P = new Parser("U:~=!none! ... ");
+    var P = new Parser("U:~=!none! ... \n");
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
       { l: 0, c: 2, t: 'Ul', x: '~' },
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, t: 'Ur', x: '!none! ...' }
-    ]]);
-    P = new Parser("U: \n+:H \n+: = \n+: !none! ... ");
+    ], []]);
+    P = new Parser("U: \n+:H \n+: = \n+: !none! ... \n");
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' } ],
       [ { l: 1, c: 0, t: '+:', h: 'U:', x: '+:' }, { l: 1, c: 2, t: 'Ul', x: 'H' } ],
       [ { l: 2, c: 0, t: '+:', h: 'U:', x: '+:' }, { l: 2, c: 3, t: '=', x: '=' } ],
-      [ { l: 3, c: 0, t: '+:', h: 'U:', x: '+:' }, { l: 3, c: 3, t: 'Ur', x: '!none! ...' } ]
+      [ { l: 3, c: 0, t: '+:', h: 'U:', x: '+:' }, { l: 3, c: 3, t: 'Ur', x: '!none! ...' } ], []
     ]);
-    P = new Parser("U: = !none!");
+    P = new Parser("U: = !none!\n");
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
-      { l: 0, c: 3, x: '=' },
+      { l: 0, c: 3, x: '=', e: 'unexpected token' },
       { l: 0, c: 5, x: '!none!' }
-    ]]);
-    P = new Parser("U:!none!");
+    ], []]);
+    P = new Parser("U:!none!\n");
     //console.log(P.tokens);
     equal(P.tokens, [[
-      { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' }, { l: 0, c: 2, x: '!none!' }
-    ]]);
+      { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' }, { l: 0, c: 2, x: '!none!', e: 'unexpected token' }
+    ], []]);
   });
   it('m: ...', function() {
-    var P = new Parser("m:~G2=G2");
+    var P = new Parser("m:~G2=G2\n");
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'm:', h: 'm:', x: 'm:' },
       { l: 0, c: 2, t: 'ml', x: '~G2' },
       { l: 0, c: 5, t: '=', x: '=' },
       { l: 0, c: 6, t: 'mr', x: 'G2' }
-    ]]);
-    P = new Parser("m:=G2");
+    ], []]);
+    P = new Parser("m:=G2\n");
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'm:', h: 'm:', x: 'm:' },
-      { l: 0, c: 2, x: '=G2' }
-    ]]);
+      { l: 0, c: 2, x: '=G2', e: 'unexpected token' }
+    ], []]);
   });
 });
 

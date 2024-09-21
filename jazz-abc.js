@@ -227,7 +227,7 @@ function assemble_U(q) {
     return;
   }
   if (a.length < 4) {
-    a[3].e = 'incomplete definition';
+    a[2].e = 'incomplete definition';
     return;
   }
 }
@@ -240,7 +240,7 @@ function reader_U_left(x, q) {
     q.reader = reader_U_eq;
   }
   else {
-    for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+    for (n = 1; n < s.length; n++) if (_isSpace(s[n]) || s[n] == '=') break;
     w = s.substring(0, n);
     a.push({ l: l, c: c, x: w });
     q.reader = undefined;
@@ -272,7 +272,7 @@ function assemble_m(q) {
     return;
   }
   if (a.length < 4) {
-    a[3].e = 'incomplete macro';
+    a[2].e = 'incomplete macro';
     return;
   }
 }
