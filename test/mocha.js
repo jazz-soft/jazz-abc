@@ -133,6 +133,14 @@ describe('key', function() {
       [ { l: 1, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 1, c: 2, t: 'Kt', x: 'Cb' } ],
       [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Ka', x: '^d' } ], []
     ]);
+    P = new Parser('K:G ^f ^C\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+      { l: 0, c: 2, t: 'Kt', x: 'G' },
+      { l: 0, c: 4, t: 'Ka', x: '^f', e: 'redundant accidental' },
+      { l: 0, c: 7, t: 'Ka', x: '^C' }
+    ], []]);
   });
   it('C', function() {
     var k = new Parser.Key();
@@ -153,6 +161,21 @@ describe('key', function() {
   it('Bb', function() {
     var k = new Parser.Key(-2);
     equal(k.scale, { c: 3, d: 5, e: 6, f: 8, g: 10, a: 12, b: 13 });
+  });
+  it('accidentals', function() {
+    var k = new Parser.Key();
+    assert.equal(k.setAcc(''), false);
+    assert.equal(k.setAcc('^f'), true);
+    assert.equal(k.setAcc('^f'), false);
+    assert.equal(k.scale['f'], 9);
+    assert.equal(k.setAcc('^^f'), true);
+    assert.equal(k.scale['f'], 10);
+    assert.equal(k.setAcc('=f'), true);
+    assert.equal(k.scale['f'], 8);
+    assert.equal(k.setAcc('_f'), true);
+    assert.equal(k.scale['f'], 7);
+    assert.equal(k.setAcc('__f'), true);
+    assert.equal(k.scale['f'], 6);
   });
 });
 

@@ -139,11 +139,13 @@ function assemble_K(q) {
     a[2].e = 'too many sharps';
     return;
   }
+  var K = new Key(m);
   for (; n < a.length; n++) {
     if (a[n].t != 'Ka') {
       a[n].e = 'unexpected token';
       return;
     }
+    if (!K.setAcc(a[n].x)) a[n].e = 'redundant accidental';
   }
 }
 function reader_K_tonic(x, q) {
@@ -195,7 +197,7 @@ function reader_K_acc(x, q) {
   var n, w;
   for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
   w = s.substring(0, n);
-  if (w.match(/^(__?|=|\^\^?)[a-g]$/)) {
+  if (w.match(/^(__?|=|\^\^?)[a-gA-G]$/)) {
     a.push({ l: l, c: c, t: 'Ka', x: w });
   }
   else {
@@ -563,6 +565,39 @@ function Key(n) {
       m = (m + 3) % 7;
     }
   }
+}
+Key.prototype.setAcc = function(s) {
+  var a, n;
+  if (s[0] == '^') {
+    if (s[1] == '^') {
+      a = s[2];
+      n = 2;
+    }
+    else {
+      a = s[1];
+      n = 1;
+    }
+  }
+  else if (s[0] == '_') {
+    if (s[1] == '_') {
+      a = s[2];
+      n = -2;
+    }
+    else {
+      a = s[1];
+      n = -1;
+    }
+  }
+  else if (s[0] == '=') {
+    a = s[1];
+    n = 0;
+  }
+  else return false;
+  a = a.toLowerCase();
+  n = _scale[a] + n;
+  if (this.scale[a] == n) return false;
+  this.scale[a] = n;
+  return true;
 }
 
 Parser.prototype.Key = Parser.Key = Key;
