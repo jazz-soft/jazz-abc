@@ -15,7 +15,6 @@ function equal(a, b) {
   }
   else assert.equal(a, b);
 }
-function _equal() {}
 
 describe('tokenize', function() {
   it('comment', function() {

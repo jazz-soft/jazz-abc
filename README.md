@@ -6,3 +6,5 @@
 [![Coverage](https://coveralls.io/repos/github/jazz-soft/jazz-abc/badge.svg?branch=main)](https://coveralls.io/github/jazz-soft/jazz-abc?branch=main)
 
 coming soon...
+
+see https://abcnotation.com/wiki/abc:standard
