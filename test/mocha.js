@@ -45,6 +45,27 @@ describe('tokenize', function() {
   });
 });
 
+describe('refnum', function() {
+  it('X: ...', function() {
+    var P = new Parser("X:\n");
+    //console.log(P.tokens);
+    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }], []]);
+    P = new Parser("X:1\n");
+    //console.log(P.tokens);
+    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: '1' }], []]);
+    P = new Parser("X:x\n");
+    //console.log(P.tokens);
+    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: 'x', e: 'expected: positive integer' }], []]);
+    P = new Parser("X: 1 2 3\n");
+    //console.log(P.tokens);
+    equal(P.tokens, [[
+      { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' },
+      { l: 0, c: 3, x: '1' },
+      { l: 0, c: 5, x: '2 3', e: 'unexpected token' }
+    ], []]);
+  });
+});
+
 describe('macro', function() {
   it('U: ...', function() {
     var P = new Parser("U:~=!none! ... \n");

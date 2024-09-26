@@ -11,8 +11,8 @@ function Parser(s) {
     this.lines.push(collect(tt, state));
   }
 }
-const _readers = { 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
-const _assemble = { 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
+const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
+const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
 function collect(tt, q) {
   var t, x;
   if (!tt.length) flush(q);
@@ -108,6 +108,31 @@ function _percent(s, l, c) {
     }
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];
+}
+
+// X: ...
+function assemble_X(q) {
+  var a = q.ass;
+  var n;
+  if (a.length > 1) {
+    n = parseInt(a[1].x);
+    if (a[1].x == n && n >= 0) {
+      if (a.length > 2) a[2].e = 'unexpected token';
+    }
+    else {
+      a[1].e = 'expected: positive integer';
+    }
+  }
+}
+function reader_X(x, q) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n;
+  for (n = 0; n < s.length; n++) if (_isSpace(s[n])) break;
+  a.push({ l: l, c: c, x: s.substring(0, n) });
+  q.reader = undefined;
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a.push({ l: l, c: c + n, x: s.substring(n) });
+  return a;
 }
 
 // K: ...
