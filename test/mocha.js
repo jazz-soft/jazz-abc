@@ -43,6 +43,17 @@ describe('tokenize', function() {
       [ { l: 5, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 5, c: 10, t: '%', x: '%' } ]
     ]);
   });
+  it('+: ...', function() {
+    var P = new Parser('+: ...');
+    //console.log(P.tokens);
+    equal(P.tokens, [[ { l: 0, c: 0, t: '+:', e: 'no previous field', x: '+:' }, { l: 0, c: 3, x: '...' } ]]);
+    P = new Parser('X:\n+: ...');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: '+:', h: 'X:', x: '+:' }, { l: 1, c: 3, x: '...' } ]
+    ]);
+  });
 });
 
 describe('refnum', function() {
@@ -120,48 +131,63 @@ describe('key', function() {
     var P = new Parser('K: % no key\n');
     //console.log(P.tokens);
     equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: key' },
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'missing "X: ..."' },
       { l: 0, c: 3, t: '%', x: '% no key' }
     ], []]);
-    P = new Parser('K: no key\n');
-    //console.log(P.tokens);
-    equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
-      { l: 0, c: 3, x: 'no', e: 'expected: key' },
-      { l: 0, c: 6, x: 'key' }
-    ], []]);
-    P = new Parser('K: Ab err\n');
-    //console.log(P.tokens);
-    equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
-      { l: 0, c: 3, t: 'Kt', x: 'Ab' },
-      { l: 0, c: 6, x: 'err', e: 'unexpected token' }
-    ], []]);
-    P = new Parser('K: Cb majOr ^d ... % ...\n');
-    //console.log(P.tokens);
-    equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
-      { l: 0, c: 3, t: 'Kt', x: 'Cb' },
-      { l: 0, c: 6, t: 'Km', x: 'majOr' },
-      { l: 0, c: 12, t: 'Ka', x: '^d' },
-      { l: 0, c: 15, x: '...', e: 'unexpected token' },
-      { l: 0, c: 19, t: '%', x: '% ...' }
-    ], []]);
-    P = new Parser('K:\n+:Cb\n+:^d\n');
+    P = new Parser('X:\nK: % no key\n');
     //console.log(P.tokens);
     equal(P.tokens, [
-      [ { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' } ],
-      [ { l: 1, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 1, c: 2, t: 'Kt', x: 'Cb' } ],
-      [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Ka', x: '^d' } ], []
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: key' }, { l: 1, c: 3, t: '%', x: '% no key' } ], []
     ]);
-    P = new Parser('K:G ^f ^C\n');
+    P = new Parser('X:\nK: no key\n');
     //console.log(P.tokens);
-    equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:' },
-      { l: 0, c: 2, t: 'Kt', x: 'G' },
-      { l: 0, c: 4, t: 'Ka', x: '^f', e: 'redundant accidental' },
-      { l: 0, c: 7, t: 'Ka', x: '^C' }
-    ], []]);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+        { l: 1, c: 3, x: 'no', e: 'expected: key' },
+        { l: 1, c: 6, x: 'key' }
+      ], []
+    ]);
+    P = new Parser('X:\nK: Ab err\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+        { l: 1, c: 3, t: 'Kt', x: 'Ab' },
+        { l: 1, c: 6, x: 'err', e: 'unexpected token' }
+      ], []
+    ]);
+    P = new Parser('X:\nK: Cb majOr ^d ... % ...\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+        { l: 1, c: 3, t: 'Kt', x: 'Cb' },
+        { l: 1, c: 6, t: 'Km', x: 'majOr' },
+        { l: 1, c: 12, t: 'Ka', x: '^d' },
+        { l: 1, c: 15, x: '...', e: 'unexpected token' },
+        { l: 1, c: 19, t: '%', x: '% ...' }
+      ], []
+    ]);
+    P = new Parser('X:\nK:\n+:Cb\n+:^d\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' } ],
+      [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Kt', x: 'Cb' } ],
+      [ { l: 3, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 3, c: 2, t: 'Ka', x: '^d' } ], []
+    ]);
+    P = new Parser('X:\nK:G ^f ^C\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
+        { l: 1, c: 2, t: 'Kt', x: 'G' },
+        { l: 1, c: 4, t: 'Ka', x: '^f', e: 'redundant accidental' },
+        { l: 1, c: 7, t: 'Ka', x: '^C' }
+      ], []
+    ]);
   });
   it('C', function() {
     var k = new Parser.Key();

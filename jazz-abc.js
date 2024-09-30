@@ -2,7 +2,7 @@ function Parser(s) {
   this.txt = s;
   this.tokens = [];
   this.lines = [];
-  var state = {};
+  var state = { head: {} };
   var all = s.split(/\r?\n|\r/);
   var i, tt;
   for (i = 0; i < all.length; i++) {
@@ -15,7 +15,9 @@ const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm
 const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
 function collect(tt, q) {
   var t, x;
-  if (!tt.length) flush(q);
+  if (!tt.length) {
+    flush(q);
+  }
   else {
     t = tt[0].t || '';
     if (t != '+:' && t[0] != '%') flush(q);
@@ -38,21 +40,16 @@ function tokens(s, l, c, q) {
       q.field = s[0];
       q.reader = _readers[x];
     }
-    if (s[0] == 'X') q.context = 'X';
-    if (s[0] == 'K' && q.context == 'X') q.context = 'T';
     a = _chop(s.substring(2), l, c + 2);
     if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
-    return [{ l: l, c: c, t: x, h: q.field + ':', x: x }].concat(a);
+    return q.field ? [{ l: l, c: c, t: x, h: q.field + ':', x: x }].concat(a) : [{ l: l, c: c, t: x, e: 'no previous field', x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
   c += i;
   if (s[i] == '%') return _percent(s.substring(i), l, c);
+  q.field = undefined;
   x = s.trim();
-  if (x == '') {
-    q.context = undefined;
-    return [];
-  }
-  return q.context == 'T' ? _tune(x, l, c) : [{ l: l, c: c, t: '??', x: x }];
+  return x ? [{ l: l, c: c, t: '??', x: x }] : [];
 }
 function _tune(s, l, c) {
   var a = [];
@@ -109,6 +106,11 @@ function _percent(s, l, c) {
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];
 }
+function _add_tune(q) {
+  q.tune = {};
+  if (q.head.macro) q.tune.macro = q.head.macro.slice();
+  if (q.head.u_def) q.tune.u_def = q.head.u_def.slice();
+}
 
 // X: ...
 function assemble_X(q) {
@@ -123,6 +125,7 @@ function assemble_X(q) {
       a[1].e = 'expected: positive integer';
     }
   }
+  _add_tune(q);
 }
 function reader_X(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
@@ -139,6 +142,11 @@ function reader_X(x, q) {
 function assemble_K(q) {
   var a = q.ass;
   var n, t, m;
+  if (!q.tune) {
+    a[0].e = 'missing "X: ..."';
+    return;
+  }
+  if (!q.tune.key) q.tune.key = new Key();
   if (a.length < 2) {
     a[0].e = 'expected: key';
     return;
