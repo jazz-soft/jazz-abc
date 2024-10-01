@@ -2,7 +2,7 @@ function Parser(s) {
   this.txt = s;
   this.tokens = [];
   this.lines = [];
-  var state = { head: {} };
+  var state = { head: { u_def: _u_def() } };
   var all = s.split(/\r?\n|\r/);
   var i, tt;
   for (i = 0; i < all.length; i++) {
@@ -13,6 +13,14 @@ function Parser(s) {
 }
 const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
 const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
+function _u_def() {
+  return { '~': '!roll!', H: '!fermata!', L: '!accent!', M: '!lowermordent!', O: '!coda!', P: '!uppermordent!', S: '!segno!', T: '!trill!', u: '!upbow!', v: '!downbow!' };
+}
+function _dup(x) {
+  var r = {};
+  if (x) for (var k of Object.keys(x)) r[k] = x[k];
+  return r;
+}
 function collect(tt, q) {
   var t, x;
   if (!tt.length) {
@@ -108,8 +116,9 @@ function _percent(s, l, c) {
 }
 function _add_tune(q) {
   q.tune = {};
-  if (q.head.macro) q.tune.macro = q.head.macro.slice();
-  if (q.head.u_def) q.tune.u_def = q.head.u_def.slice();
+  q.tune.macro = _dup(q.head.macro);
+  q.tune.u_def = _dup(q.head.u_def);
+  q.cut = true;
 }
 
 // X: ...
