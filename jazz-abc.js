@@ -498,17 +498,79 @@ const _fields = {
   Z: { det: 'transcription' }
 };
 
-const _symbol = {
-  '~': '!roll!',
-  H: '!fermata!',
-  L: '!accent!',
-  M: '!lowermordent!',
-  O: '!coda!',
-  P: '!uppermordent!',
-  S: '!segno!',
-  T: '!trill!',
-  u: '!upbow!',
-  v: '!downbow!'
+const _symbols = {
+  'trill': { det: 'trill' },
+  'trill(': { det: 'start of a trill' },
+  'trill)': { det: 'end of a trill' },
+  'lowermordent': { det: 'lower mordent' },
+  'uppermordent': { det: 'upper mordent' },
+  'mordent': { det: 'lower mordent' },
+  'pralltriller': { det: 'upper mordent' },
+  'roll': { det: 'roll mark' },
+  'turn': { det: 'turn mark' },
+  'turnx': { det: 'turn slash mark' },
+  'invertedturn': { det: 'inverted turn mark' },
+  'invertedturnx': { det: 'inverted turn slash mark' },
+  'arpeggio': { det: 'vertical squiggle' },
+  '>': { det: 'accent' },
+  'accent': { det: 'accent' },
+  'emphasis': { det: 'accent' },
+  '^': { det: 'marcato' },
+  'marcato': { det: 'marcato' },
+  'fermata': { det: 'fermata' },
+  'invertedfermata': { det: 'upside down fermata' },
+  'tenuto': { det: 'tenuto' },
+  '0': { det: 'fingering' },
+  '1': { det: 'fingering' },
+  '2': { det: 'fingering' },
+  '3': { det: 'fingering' },
+  '4': { det: 'fingering' },
+  '5': { det: 'fingering' },
+  '+': { det: 'pizzicato' },
+  'plus': { det: 'pizzicato' },
+  'snap': { det: 'snap-pizzicato' },
+  'slide': { det: 'slide up' },
+  'wedge': { det: 'wedge mark' },
+  'upbow': { det: 'up bow' },
+  'downbow': { det: 'down bow' },
+  'open': { det: 'circle mark' },
+  'thumb': { det: 'cello thumb' },
+  'breath': { det: 'breath mark' },
+  'pppp': { det: 'pianissimo' },
+  'ppp': { det: 'pianissimo' },
+  'pp': { det: 'pianissimo' }, 
+  'p': { det: 'piano' },
+  'mp': { det: 'mezzo piano' },
+  'mf': { det: 'mezzo forte' },
+  'f': { det: 'forte' },
+  'ff': { det: 'fortissimo' },
+  'fff': { det: 'fortissimo' },
+  'ffff': { det: 'fortissimo' },
+  'sfz': { det: 'sforzando' },
+  'crescendo(': { det: 'start of a crescendo mark' },
+  '<(': { det: 'start of a crescendo mark' },
+  'crescendo)': { det: 'end of a crescendo mark' },
+  '<)': { det: 'end of a crescendo mark' },
+  'diminuendo(': { det: 'start of a diminuendo mark' },
+  '>(': { det: 'start of a diminuendo mark' },
+  'diminuendo)': { det: 'end of a diminuendo mark' },
+  '>)': { det: 'end of a diminuendo mark' },
+  'segno': { det: 'segno' },
+  'coda': { det: 'coda' },
+  'D.S.': { det: 'D.S.' },
+  'D.S.alcoda': { det: 'D.S. al coda' },
+  'D.S.alfine': { det: 'D.S. al fine' },
+  'D.C.': { det: 'D.C.' },
+  'D.C.alcoda': { det: 'D.C. al coda' },
+  'D.C.alfine': { det: 'D.C. al fine' },
+  'dacoda': { det: 'da code' },
+  'dacapo': { det: 'da capo' },
+  'fine': { det: 'fine' },
+  'shortphrase': { det: 'vertical line' },
+  'mediumphrase': { det: 'vertical line' },
+  'longphrase': { det: 'vertical line' },
+  'editorial': { det: 'editorial accidental' },
+  'courtesy': { det: 'courtesy accidental' }
 };
 
 Parser.prototype.pseudo = Parser.pseudo = function() {
@@ -516,10 +578,14 @@ Parser.prototype.pseudo = Parser.pseudo = function() {
   for (var k of Object.keys(_pseudo)) a.push({ name: k, det: _pseudo[k].det });
   return a;
 }
-
 Parser.prototype.fields = Parser.fields = function() {
   var a = [];
   for (var k of Object.keys(_fields)) a.push({ name: k, det: _fields[k].det });
+  return a;
+}
+Parser.prototype.symbols = Parser.symbols = function() {
+  var a = [];
+  for (var k of Object.keys(_symbols)) a.push({ name: k, det: _symbols[k].det });
   return a;
 }
 
