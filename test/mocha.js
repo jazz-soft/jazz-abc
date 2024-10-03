@@ -261,3 +261,21 @@ describe('midi', function() {
     for (m = 0; m < 128; m++) assert.equal(m, Parser.n2m(Parser.m2n(m, k), k));
   });
 });
+
+describe('etc', function() {
+  it('pseudo', function() {
+    var o = {};
+    for (var x of Parser.pseudo()) o[x.name] = x.det;
+    assert.equal(o['newpage'], 'start a new page');
+  });
+  it('fields', function() {
+    var o = {};
+    for (var x of Parser.fields()) o[x.name] = x.det;
+    assert.equal(o['M'], 'meter');
+  });
+  it('symbols', function() {
+    var o = {};
+    for (var x of Parser.symbols()) o[x.name] = x.det;
+    assert.equal(o['trill'], 'trill');
+  });
+});
