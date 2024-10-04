@@ -143,7 +143,7 @@ function reader_X(x, q) {
   a.push({ l: l, c: c, x: s.substring(0, n) });
   q.reader = undefined;
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
-  if (n < s.length) a.push({ l: l, c: c + n, x: s.substring(n) });
+  if (n < s.length) a = a.concat(reader_unexpected({ l: l, c: c + n, x: s.substring(n) }, q));
   return a;
 }
 
@@ -293,7 +293,19 @@ function reader_U_left(x, q) {
   if (n < s.length) a = a.concat(q.reader ? q.reader({ l: l, c: c + n, x: s.substring(n) }, q) : [{ l: l, c: c + n, x: s.substring(n) }]);
   return a;
 }
-const reader_U_right = reader_rest('Ur');
+function reader_U_right(x, q) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n = read_symbol(s) || read_quoted(s);
+  if (n) a.push({ l: l, c: c, t: 'Ur', x: s.substring(0, n) });
+  else {
+    n = read_any(s);
+    if (n) a.push({ l: l, c: c, x: s.substring(0, n) });
+  }
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  q.reader = undefined;
+  if (n < s.length) a = a.concat(reader_unexpected({ l: l, c: c + n, x: s.substring(n) }, q));
+  return a;
+}
 const reader_U_eq = reader_char('=', reader_U_right);
 
 // m: ...
@@ -364,6 +376,61 @@ function reader_rest(tt, nxt) {
   };
 }
 
+function reader_unexpected(x, q) {
+  var a = [], s = x.x, l = x.l, c = x.c;
+  var n = read_any(s);
+  if (n) a.push({ l: l, c: c, x: s.substring(0, n) });
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  q.reader = undefined;
+  if (n < s.length) a = a.concat([{ l: l, c: c + n, x: s.substring(n) }]);
+  return a;
+}
+
+function read_symbol(s) { // !...!
+  if (s[0] != '!') return 0;
+  var n, c;
+  for (n = 1; n < s.length; n++) {
+    c = s[n];
+    if (c == '!') return n + 1; 
+    if (_isSpace(c)) break;
+  }
+  return 0;
+}
+function read_quoted(s) { // "..."
+  if (s[0] != '"') return 0;
+  var n, c;
+  for (n = 1; n < s.length; n++) {
+    c = s[n];
+    if (c == '"') return n + 1; 
+  }
+  return 0;
+}
+function read_any(s) {
+  if (!s.length) return 0;
+  var n;
+  var c = s[0];
+  if (_isLetter(c) || c == '_') {
+    for (n = 1; n < s.length; n++) {
+      c = s[n];
+      if (!_isLetter(c) && !_isDigit(c) && c != '_') break;
+    }
+  }
+  else if (_isDigit(c)) {
+    for (n = 1; n < s.length; n++) {
+      c = s[n];
+      if (!_isDigit(c)) break;
+    }
+  }
+  else {
+    for (n = 1; n < s.length; n++) {
+      if (s[n] != c) break;
+    }
+  }
+  return n;
+}
+
+var _0 = '0'.charCodeAt(0);
+var _9 = '9'.charCodeAt(0);
 var _A = 'A'.charCodeAt(0);
 var _G = 'G'.charCodeAt(0);
 var _H = 'H'.charCodeAt(0);
@@ -384,6 +451,10 @@ function _HW(c) {
 function _isLetter(c) {
   c = c ? c.charCodeAt(0) : 0;
   return c >= _A && c <= _Z || c >= _a && c <= _z;
+}
+function _isDigit(c) {
+  c = c ? c.charCodeAt(0) : 0;
+  return c >= _0 && c <= _9;
 }
 function _isNote(c) { return c ? _ABCDEFG(c.toUpperCase()) : false; }
 function _isField(c) { return c == '+' || _isLetter(c); }
