@@ -278,8 +278,11 @@ function assemble_U(q) {
     a[3].e = a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : 'unexpected token';
     return;
   }
-  if (a[3].x[0] == '!' && !symbolDet(a[3].x)) a[3].e = 'unknown symbol';
-  symbolDet(a[3].x);
+  if (a[3].x[0] == '!' || a[3].x[0] == '+') {
+    a[3].t = '!!';
+    if (!symbolDet(a[3].x)) a[3].e = 'unknown symbol';
+  }
+  else if (a[3].x[0] == '"') a[3].t = '""';
   if (a.length > 4) {
     a[4].e = 'unexpected token';
   }
@@ -304,7 +307,7 @@ function reader_U_left(x, q) {
 }
 function reader_U_right(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
-  var n = read_symbol(s) || read_quoted(s);
+  var n = read_symbol(s) || read_depr_symbol(s) || read_quoted(s);
   if (n) a.push({ l: l, c: c, t: 'Ur', x: s.substring(0, n) });
   else {
     n = read_any(s);
@@ -401,6 +404,16 @@ function read_symbol(s) { // !...!
   for (n = 1; n < s.length; n++) {
     c = s[n];
     if (c == '!') return n > 1 ? n + 1 : 0; 
+    if (_isSpace(c)) break;
+  }
+  return 0;
+}
+function read_depr_symbol(s) { // +...+ // deprecated
+  if (s[0] != '+') return 0;
+  var n, c;
+  for (n = 1; n < s.length; n++) {
+    c = s[n];
+    if (c == '+') return n > 1 ? n + 1 : 0; 
     if (_isSpace(c)) break;
   }
   return 0;
@@ -652,7 +665,7 @@ const _symbols = {
 };
 function symbolDet(s) {
   var n = s.length - 1;
-  if (n < 2 || s[0] != '!' || s[n] != '!' ) return;
+  if (n < 2 || s[0] != s[n] || s[0] != '!' && s[0] != '+' ) return;
   s = s.substring(1, n);
   if (_symbols[s]) return _symbols[s].det;
   var ff = 0, pp = 0;
