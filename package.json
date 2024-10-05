@@ -1,6 +1,6 @@
 {
   "name": "jazz-abc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "coming soon...",
   "main": "jazz-abc.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "author": "jazz-soft (https://jazz-soft.net/)",
   "devDependencies": {
-    "eslint": "^9.11.1",
+    "eslint": "^9.12.0",
     "mocha": "^10.7.3",
     "nyc": "^17.1.0"
   },

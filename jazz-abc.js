@@ -274,6 +274,15 @@ function assemble_U(q) {
     a[2].e = 'incomplete definition';
     return;
   }
+  if (a[3].t != 'Ur') {
+    a[3].e = a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : 'unexpected token';
+    return;
+  }
+  if (a[3].x[0] == '!' && !symbolDet(a[3].x)) a[3].e = 'unknown symbol';
+  symbolDet(a[3].x);
+  if (a.length > 4) {
+    a[4].e = 'unexpected token';
+  }
 }
 function reader_U_left(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
@@ -391,7 +400,7 @@ function read_symbol(s) { // !...!
   var n, c;
   for (n = 1; n < s.length; n++) {
     c = s[n];
-    if (c == '!') return n + 1; 
+    if (c == '!') return n > 1 ? n + 1 : 0; 
     if (_isSpace(c)) break;
   }
   return 0;
@@ -570,6 +579,8 @@ const _fields = {
 };
 
 const _symbols = {
+  'none': { det: 'disable' },
+  'nil': { det: 'disable' },
   'trill': { det: 'trill' },
   'trill(': { det: 'start of a trill' },
   'trill)': { det: 'end of a trill' },
@@ -607,16 +618,12 @@ const _symbols = {
   'open': { det: 'circle mark' },
   'thumb': { det: 'cello thumb' },
   'breath': { det: 'breath mark' },
-  'pppp': { det: 'pianissimo' },
-  'ppp': { det: 'pianissimo' },
-  'pp': { det: 'pianissimo' }, 
   'p': { det: 'piano' },
   'mp': { det: 'mezzo piano' },
-  'mf': { det: 'mezzo forte' },
+  'sp': { det: 'subito piano' },
   'f': { det: 'forte' },
-  'ff': { det: 'fortissimo' },
-  'fff': { det: 'fortissimo' },
-  'ffff': { det: 'fortissimo' },
+  'mf': { det: 'mezzo forte' },
+  'sf': { det: 'subito forte' },
   'sfz': { det: 'sforzando' },
   'crescendo(': { det: 'start of a crescendo mark' },
   '<(': { det: 'start of a crescendo mark' },
@@ -643,6 +650,37 @@ const _symbols = {
   'editorial': { det: 'editorial accidental' },
   'courtesy': { det: 'courtesy accidental' }
 };
+function symbolDet(s) {
+  var n = s.length - 1;
+  if (n < 2 || s[0] != '!' || s[n] != '!' ) return;
+  s = s.substring(1, n);
+  if (_symbols[s]) return _symbols[s].det;
+  var ff = 0, pp = 0;
+  for (n = 0; n < s.length; n++) {
+    if (s[n] == 'f') ff++;
+    else if (s[n] == 'p') pp++;
+  }
+  if (ff == s.length) {
+    s = 'forti';
+    for (n = 1; n < ff; n++) s += 'ssi';
+    return s + 'mo';
+  }
+  if (ff == s.length - 1 && ff > 1 && s[0] == 's') {
+    s = 'subito forti';
+    for (n = 1; n < ff; n++) s += 'ssi';
+    return s + 'mo';
+  }
+  if (pp == s.length) {
+    s = 'piani';
+    for (n = 1; n < pp; n++) s += 'ssi';
+    return s + 'mo';
+  }
+  if (pp == s.length - 1 && pp > 1 && s[0] == 's') {
+    s = 'subito piani';
+    for (n = 1; n < pp; n++) s += 'ssi';
+    return s + 'mo';
+  }
+}
 
 Parser.prototype.pseudo = Parser.pseudo = function() {
   var a = [];
@@ -659,6 +697,7 @@ Parser.prototype.symbols = Parser.symbols = function() {
   for (var k of Object.keys(_symbols)) a.push({ name: k, det: _symbols[k].det });
   return a;
 }
+Parser.prototype.symbolDet = Parser.symbolDet = symbolDet;
 
 const _notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];
 const _scale = { c: 3, d: 5, e: 7, f: 8, g: 10, a: 12, b: 14 };  // MIDI + 3 to allow Cbb
