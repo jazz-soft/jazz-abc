@@ -51,7 +51,7 @@ describe('tokenize', function() {
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
-      [ { l: 1, c: 0, t: '+:', h: 'X:', x: '+:' }, { l: 1, c: 3, x: '...' } ]
+      [ { l: 1, c: 0, t: '+:', h: 'X:', x: '+:' }, { l: 1, c: 3, x: '...', e: 'expected: positive integer' } ]
     ]);
   });
 });
@@ -62,25 +62,25 @@ describe('refnum', function() {
     //console.log(P.tokens);
     equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }], []]);
   });
-  it('X:1\\n', function() {
-    var P = new Parser('X:1\n');
+  it('X:1', function() {
+    var P = new Parser('X:1');
     //console.log(P.tokens);
-    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: '1' }], []]);
+    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: '1' }]]);
   });
-  it('X:x\\n', function() {
-    var P = new Parser('X:x\n');
+  it('X:x', function() {
+    var P = new Parser('X:x');
     //console.log(P.tokens);
-    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: 'x', e: 'expected: positive integer' }], []]);
+    equal(P.tokens, [[{ l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' }, { l: 0, c: 2, x: 'x', e: 'expected: positive integer' }]]);
   });
-  it('X: 1 2 3 4\\n', function() {
-    var P = new Parser('X: 1 2 3 4\n');
+  it('X: 1 2 3 4', function() {
+    var P = new Parser('X: 1 2 3 4');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' },
       { l: 0, c: 3, x: '1' },
       { l: 0, c: 5, x: '2', e: 'unexpected token' },
       { l: 0, c: 7, x: '3 4' }
-    ], []]);
+    ]]);
   });
 });
 
@@ -96,18 +96,18 @@ describe('macro', function() {
       { l: 0, c: 11, x: '...', e: 'unexpected token' }
     ], []]);
   });
-  it('U:~=!dummy!\\n', function() {
-    var P = new Parser('U:~=!dummy!\n');
+  it('U:~=!dummy!', function() {
+    var P = new Parser('U:~=!dummy!');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
       { l: 0, c: 2, t: 'Ul', x: '~' },
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, t: '!!', x: '!dummy!', e: 'unknown symbol' },
-    ], []]);
+    ]]);
   });
-  it('U:~=!! ... \\n', function() {
-    var P = new Parser('U:~=!! ... \n');
+  it('U:~=!! ...', function() {
+    var P = new Parser('U:~=!! ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -115,10 +115,10 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: '!!', e: 'unexpected token' },
       { l: 0, c: 7, x: '...' }
-    ], []]);
+    ]]);
   });
-  it('U:~=!!! ... \\n', function() {
-    var P = new Parser('U:~=!!! ... \n');
+  it('U:~=!!! ...', function() {
+    var P = new Parser('U:~=!!! ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -126,10 +126,10 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: '!!!', e: 'unexpected token' },
       { l: 0, c: 8, x: '...' }
-    ], []]);
+    ]]);
   });
-  it('U:~=! ... \\n', function() {
-    var P = new Parser('U:~=! ... \n');
+  it('U:~=! ...', function() {
+    var P = new Parser('U:~=! ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -137,30 +137,30 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: '!', e: "unmatched '!'" },
       { l: 0, c: 6, x: '...' }
-    ], []]);
+    ]]);
   });
-  it('U:~=+none+\\n', function() {
-    var P = new Parser('U:~=+none+\n');
+  it('U:~=+none+', function() {
+    var P = new Parser('U:~=+none+');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
       { l: 0, c: 2, t: 'Ul', x: '~' },
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, t: '!!', x: '+none+' }
-    ], []]);
+    ]]);
   });
-  it('U:~=++\\n', function() {
-    var P = new Parser('U:~=++\n');
+  it('U:~=++', function() {
+    var P = new Parser('U:~=++');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
       { l: 0, c: 2, t: 'Ul', x: '~' },
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: '++', e: 'unexpected token' }
-    ], []]);
+    ]]);
   });
-  it('U:~="none" ... \\n', function() {
-    var P = new Parser('U:~="none" ... \n');
+  it('U:~="none" ...', function() {
+    var P = new Parser('U:~="none" ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -168,10 +168,10 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, t: '""', x: '"none"' },
       { l: 0, c: 11, x: '...', e: 'unexpected token' }
-    ], []]);
+    ]]);
   });
-  it('U:~="" ... \\n', function() {
-    var P = new Parser('U:~="" ... \n');
+  it('U:~="" ...', function() {
+    var P = new Parser('U:~="" ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -179,10 +179,10 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, t: '""', x: '""' },
       { l: 0, c: 7, x: '...', e: 'unexpected token' }
-    ], []]);
+    ]]);
   });
-  it('U:~=" ... \\n', function() {
-    var P = new Parser('U:~=" ... \n');
+  it('U:~=" ...', function() {
+    var P = new Parser('U:~=" ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -190,10 +190,10 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: '"', e: 'unmatched \'"\'' },
       { l: 0, c: 6, x: '...' }
-    ], []]);
+    ]]);
   });
-  it('U:~=none ... \\n', function() {
-    var P = new Parser('U:~=none ... \n');
+  it('U:~=none ...', function() {
+    var P = new Parser('U:~=none ...');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
@@ -201,7 +201,7 @@ describe('macro', function() {
       { l: 0, c: 3, t: '=', x: '=' },
       { l: 0, c: 4, x: 'none', e: 'unexpected token' },
       { l: 0, c: 9, x: '...' }
-    ], []]);
+    ]]);
   });
   it('U: \\n+:H \\n+: = \\n+: !none! ... ...\\n', function() {
     var P = new Parser('U: \n+:H \n+: = \n+: !none! ... ...\n');
@@ -214,91 +214,91 @@ describe('macro', function() {
         { l: 3, c: 10, x: '...', e: 'unexpected token' }, { l: 3, c: 14, x: '...' } ], []
     ]);
   });
-  it('U: = !none!\\n', function() {
-    var P = new Parser('U: = !none!\n');
+  it('U: = !none!', function() {
+    var P = new Parser('U: = !none!');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' },
       { l: 0, c: 3, x: '=', e: 'unexpected token' },
       { l: 0, c: 5, x: '!none!' }
-    ], []]);
+    ]]);
   });
-  it('U:!none!\\n', function() {
-    var P = new Parser('U:!none!\n');
+  it('U:!none!', function() {
+    var P = new Parser('U:!none!');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'U:', h: 'U:', x: 'U:' }, { l: 0, c: 2, x: '!none!', e: 'unexpected token' }
-    ], []]);
+    ]]);
   });
-  it('m:~G2=G2\\n', function() {
-    var P = new Parser('m:~G2=G2\n');
+  it('m:~G2=G2', function() {
+    var P = new Parser('m:~G2=G2');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'm:', h: 'm:', x: 'm:' },
       { l: 0, c: 2, t: 'ml', x: '~G2' },
       { l: 0, c: 5, t: '=', x: '=' },
       { l: 0, c: 6, t: 'mr', x: 'G2' }
-    ], []]);
+    ]]);
   });
-  it('m:=G2\\n', function() {
-    var P = new Parser('m:=G2\n');
+  it('m:=G2', function() {
+    var P = new Parser('m:=G2');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'm:', h: 'm:', x: 'm:' },
       { l: 0, c: 2, x: '=G2', e: 'unexpected token' }
-    ], []]);
+    ]]);
   });
-  it('m: G2\\n', function() {
-    var P = new Parser('m: G2\n');
+  it('m: G2', function() {
+    var P = new Parser('m: G2');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'm:', h: 'm:', x: 'm:' },
       { l: 0, c: 3, t: 'ml', x: 'G2', e: 'incomplete macro' }
-    ], []]);
+    ]]);
   });
 });
 
 describe('key', function() {
-  it('K: % no key\\n', function() {
-    var P = new Parser('K: % no key\n');
+  it('K: % no key', function() {
+    var P = new Parser('K: % no key');
     //console.log(P.tokens);
     equal(P.tokens, [[
       { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'missing "X: ..."' },
       { l: 0, c: 3, t: '%', x: '% no key' }
-    ], []]);
+    ]]);
   });
-  it('X:\\nK: % no key\\n', function() {
-    var P = new Parser('X:\nK: % no key\n');
+  it('X:\\nK: % no key', function() {
+    var P = new Parser('X:\nK: % no key');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
-      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: key' }, { l: 1, c: 3, t: '%', x: '% no key' } ], []
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'expected: key' }, { l: 1, c: 3, t: '%', x: '% no key' } ]
     ]);
   });
-  it('X:\\nK: no key\\n', function() {
-    var P = new Parser('X:\nK: no key\n');
+  it('X:\\nK: no key', function() {
+    var P = new Parser('X:\nK: no key');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
       [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
         { l: 1, c: 3, x: 'no', e: 'expected: key' },
         { l: 1, c: 6, x: 'key' }
-      ], []
+      ]
     ]);
   });
-  it('X:\\nK: Ab err\\n', function() {
-    var P = new Parser('X:\nK: Ab err\n');
+  it('X:\\nK: Ab err', function() {
+    var P = new Parser('X:\nK: Ab err');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
       [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' },
         { l: 1, c: 3, t: 'Kt', x: 'Ab' },
         { l: 1, c: 6, x: 'err', e: 'unexpected token' }
-      ], []
+      ]
     ]);
   });
-  it('X:\\nK: Cb majOr ^d ... % ...\\n', function() {
-    var P = new Parser('X:\nK: Cb majOr ^d ... % ...\n');
+  it('X:\\nK: Cb majOr ^d ... % ...', function() {
+    var P = new Parser('X:\nK: Cb majOr ^d ... % ...');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
@@ -308,21 +308,21 @@ describe('key', function() {
         { l: 1, c: 12, t: 'Ka', x: '^d' },
         { l: 1, c: 15, x: '...', e: 'unexpected token' },
         { l: 1, c: 19, t: '%', x: '% ...' }
-      ], []
+      ]
     ]);
   });
-  it('X:\\nK:\\n+:Cb\\n+:^d\\n', function() {
-    var P = new Parser('X:\nK:\n+:Cb\n+:^d\n');
+  it('X:\\nK:\\n+:Cb\\n+:^d', function() {
+    var P = new Parser('X:\nK:\n+:Cb\n+:^d');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
       [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' } ],
       [ { l: 2, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 2, c: 2, t: 'Kt', x: 'Cb' } ],
-      [ { l: 3, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 3, c: 2, t: 'Ka', x: '^d' } ], []
+      [ { l: 3, c: 0, t: '+:', h: 'K:', x: '+:' }, { l: 3, c: 2, t: 'Ka', x: '^d' } ]
     ]);
   });
-  it('X:\\nK:G ^f ^C\\n', function() {
-    var P = new Parser('X:\nK:G ^f ^C\n');
+  it('X:\\nK:G ^f ^C', function() {
+    var P = new Parser('X:\nK:G ^f ^C');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
@@ -330,7 +330,7 @@ describe('key', function() {
         { l: 1, c: 2, t: 'Kt', x: 'G' },
         { l: 1, c: 4, t: 'Ka', x: '^f', e: 'redundant accidental' },
         { l: 1, c: 7, t: 'Ka', x: '^C' }
-      ], []
+      ]
     ]);
   });
   it('C', function() {

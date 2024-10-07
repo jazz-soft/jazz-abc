@@ -10,6 +10,7 @@ function Parser(s) {
     this.tokens.push(tt);
     this.lines.push(collect(tt, state));
   }
+  flush(state);
 }
 const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
 const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
