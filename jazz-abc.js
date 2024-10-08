@@ -26,6 +26,7 @@ function collect(tt, q) {
   var t, x;
   if (!tt.length) {
     flush(q);
+    q.last = undefined;
   }
   else {
     t = tt[0].t || '';
@@ -58,9 +59,22 @@ function tokens(s, l, c, q) {
   if (s[i] == '%') return _percent(s.substring(i), l, c);
   q.field = undefined;
   x = s.trim();
-  return x ? [{ l: l, c: c, t: '??', x: x }] : [];
+  return q.tune && q.tune.key ? _tune(x, l, c, q) : _free(x, l, c, q);
+}
+function _free(s, l, c, q) {
+  if (!s) return [];
+  var a = [];
+  var n = 0;
+  if (q.last && q.last != '??') {
+    n = read_any(s);
+    if (n) a.push({ l: l, c: c, t: '??', x: s.substring(0, n), e: 'missing empty line' });
+  }
+  for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+  if (n < s.length) a.push({ l: l, c: c + n, t: '??', x: s.substring(n) });
+  return a;
 }
 function _tune(s, l, c) {
+  //return [{ l: l, c: c, x: s }];
   var a = [];
   var n, k;
   n = 0;
@@ -190,6 +204,7 @@ function assemble_K(q) {
     }
     if (!K.setAcc(a[n].x)) a[n].e = 'redundant accidental';
   }
+  q.tune.key = K;
 }
 function reader_K_tonic(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
