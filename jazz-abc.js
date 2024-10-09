@@ -56,7 +56,7 @@ function tokens(s, l, c, q) {
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
   c += i;
-  if (s[i] == '%') return _percent(s.substring(i), l, c);
+  if (s[i] == '%') return _percent(s.substring(i), l, c, q);
   q.field = undefined;
   x = s.trim();
   return q.tune && q.tune.key ? _tune(x, l, c, q) : _free(x, l, c, q);
@@ -71,6 +71,7 @@ function _free(s, l, c, q) {
   }
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
   if (n < s.length) a.push({ l: l, c: c + n, t: '??', x: s.substring(n) });
+  q.last = '??';
   return a;
 }
 function _tune(s, l, c) {
@@ -116,15 +117,17 @@ function _chop(s, l, c) {
   a.push({ l: l, c: c + i, x: s.substring(i).trim() });
   return a;
 }
-function _percent(s, l, c) {
+function _percent(s, l, c, q) {
   var i;
   if (!c) {
     if (s[1] == '%') {
       for (i = 2; i < s.length; i++) if (!_isLetter(s[i])) break;
       return [{ l: l, c: c, t: '%%', h: s.substring(0, i), x: s.substring(0, i) }].concat(_chop(s.substring(i), l, c + i));
     }
-    else if (s.startsWith('%abc') && !_isLetter(s[4])) {
-      return [{ l: l, c: c, t: '%:', h: '%:', x: '%abc' }].concat(_chop(s.substring(4), l, c + 4));
+    else if (!q.abc && s.startsWith('%abc') && !_isLetter(s[4])) {
+      q.abc = true;
+      q.last = '%:';
+      return (l ? [{ l: l, c: c, t: '%:', h: '%:', x: '%abc', e: 'must be the first line' }] : [{ l: l, c: c, t: '%:', h: '%:', x: '%abc' }]).concat(_chop(s.substring(4), l, c + 4));
     }
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];

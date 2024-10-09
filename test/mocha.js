@@ -17,8 +17,38 @@ function equal(a, b) {
 }
 
 describe('tokenize', function() {
+  it('%abc', function() {
+    var P = new Parser('%abc-2.2 %etc\n%abcd\n%abc');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 0, c: 4, x: '-2.2' }, { l: 0, c: 9, t: '%', x: '%etc' } ],
+      [ { l: 1, c: 0, t: '%', x: '%abcd' } ],
+      [ { l: 2, c: 0, t: '%', x: '%abc' } ]
+    ]);
+    P = new Parser(' %abc\n%abc');
+    console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 1, t: '%', x: '%abc' } ],
+      [ { l: 1, c: 0, t: '%:', h: '%:', x: '%abc', e: 'must be the first line' } ],
+    ]);
+  });
+  it.only('free text', function() {
+    var P = new Parser('%abc\na %warn\nno %warn');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: '%:', h: '%:', x: '%abc' } ],
+      [ { l: 1, c: 0, t: '??', x: 'a', e: 'missing empty line' }, { l: 1, c: 2, t: '??', x: '%warn' } ],
+      [ { l: 2, c: 0, t: '??', x: 'no %warn' } ]
+    ]);
+    P = new Parser('%abc\n\nno %warn');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: '%:', h: '%:', x: '%abc' } ], [],
+      [ { l: 2, c: 0, t: '??', x: 'no %warn' } ]
+    ]);
+  });
   it('comment', function() {
-    var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc\nB: %\nB:\\% \\%%\n');
+    var P = new Parser('N: \nN:ab \nN: ac \\% c\nN: ac \\\\% c \nabc\nB: %\nB:\\% \\%%');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: 'N:', h: 'N:', x: 'N:' } ],
@@ -27,20 +57,14 @@ describe('tokenize', function() {
       [ { l: 3, c: 0, t: 'N:', h: 'N:', x: 'N:' }, { l: 3, c: 3, x: 'ac \\\\' }, { l: 3, c: 8, t: '%', x: '% c' } ],
       [ { l: 4, c: 0, t: '??', x: 'abc' } ],
       [ { l: 5, c: 0, t: 'B:', h: 'B:', x: 'B:' }, { l: 5, c: 3, t: '%', x: '%' } ],
-      [ { l: 6, c: 0, t: 'B:', h: 'B:', x: 'B:' }, { l: 6, c: 2, x: '\\% \\%' }, { l: 6, c: 7, t: '%', x: '%' } ],
-      [ ]
+      [ { l: 6, c: 0, t: 'B:', h: 'B:', x: 'B:' }, { l: 6, c: 2, x: '\\% \\%' }, { l: 6, c: 7, t: '%', x: '%' } ]
     ]);
   });
   it('pseudocomment', function() {
-    var P = new Parser('%abc\n %abc\n%abc-2.1\n%abc %abc\n%abc-2.1%abc\n%%endtext %');
+    var P = new Parser('%%endtext %');
     //console.log(P.tokens);
     equal(P.tokens, [
-      [ { l: 0, c: 0, t: '%:', h: '%:', x: '%abc' } ],
-      [ { l: 1, c: 1, t: '%', x: '%abc' } ],
-      [ { l: 2, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 2, c: 4, x: '-2.1' } ],
-      [ { l: 3, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 3, c: 5, t: '%', x: '%abc' } ],
-      [ { l: 4, c: 0, t: '%:', h: '%:', x: '%abc' }, { l: 4, c: 4, x: '-2.1' }, { l: 4, c: 8, t: '%', x: '%abc' } ],
-      [ { l: 5, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 5, c: 10, t: '%', x: '%' } ]
+      [ { l: 0, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 0, c: 10, t: '%', x: '%' } ]
     ]);
   });
   it('+: ...', function() {
