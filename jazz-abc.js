@@ -22,6 +22,11 @@ function _dup(x) {
   if (x) for (var k of Object.keys(x)) r[k] = x[k];
   return r;
 }
+function err(e, x) {
+  if (!e) return x;
+  x.e = x.e ? x.e + '; ' + e : e;
+  return x;
+}
 function collect(tt, q) {
   var t, x;
   if (!tt.length) {
@@ -127,7 +132,7 @@ function _percent(s, l, c, q) {
     else if (!q.abc && s.startsWith('%abc') && !_isLetter(s[4])) {
       q.abc = true;
       q.last = '%:';
-      return (l ? [{ l: l, c: c, t: '%:', h: '%:', x: '%abc', e: 'must be the first line' }] : [{ l: l, c: c, t: '%:', h: '%:', x: '%abc' }]).concat(_chop(s.substring(4), l, c + 4));
+      return [err(l ? 'must be the first line' : undefined, { l: l, c: c, t: '%:', h: '%:', x: '%abc' })].concat(_chop(s.substring(4), l, c + 4));
     }
   }
   return [{ l: l, c: c, t: '%', x: s.trim() }];
@@ -146,10 +151,10 @@ function assemble_X(q) {
   if (a.length > 1) {
     n = parseInt(a[1].x);
     if (a[1].x == n && n >= 0) {
-      if (a.length > 2) a[2].e = 'unexpected token';
+      if (a.length > 2) err('unexpected token', a[2]);
     }
     else {
-      a[1].e = 'expected: positive integer';
+      err('expected: positive integer', a[1]);
     }
   }
   _add_tune(q);
@@ -170,16 +175,16 @@ function assemble_K(q) {
   var a = q.ass;
   var n, t, m;
   if (!q.tune) {
-    a[0].e = 'missing "X: ..."';
+    err('missing "X: ..."', a[0]);
     return;
   }
   if (!q.tune.key) q.tune.key = new Key();
   if (a.length < 2) {
-    a[0].e = 'expected: key';
+    err('expected: key', a[0]);
     return;
   }
   if (a[1].t != 'Kt') {
-    a[1].e = 'expected: key';
+    err('expected: key', a[1]);
     return;
   }
   t = a[1].x;
@@ -190,22 +195,22 @@ function assemble_K(q) {
   }
   m = sharps(t, m);
   if (m < -7) {
-    a[1].e = 'too many flats';
-    a[2].e = 'too many flats';
+    err('too many flats', a[1]);
+    err('too many flats', a[2]);
     return;
   }
   if (m > 7) {
-    a[1].e = 'too many sharps';
-    a[2].e = 'too many sharps';
+    err('too many sharps', a[1]);
+    err('too many sharps', a[2]);
     return;
   }
   var K = new Key(m);
   for (; n < a.length; n++) {
     if (a[n].t != 'Ka') {
-      a[n].e = 'unexpected token';
+      err('unexpected token', a[n]);
       return;
     }
-    if (!K.setAcc(a[n].x)) a[n].e = 'redundant accidental';
+    if (!K.setAcc(a[n].x)) err('redundant accidental', a[n]);
   }
   q.tune.key = K;
 }
@@ -274,36 +279,36 @@ function reader_K_acc(x, q) {
 function assemble_U(q) {
   var a = q.ass;
   if (a.length < 2) {
-    a[0].e = 'expected: definition';
+    err('expected: definition', a[0]);
     return;
   }
   if (a[1].t != 'Ul') {
-    a[1].e = 'unexpected token';
+    err('unexpected token', a[1]);
     return;
   }
   if (a.length < 3) {
-    a[1].e = 'incomplete definition';
+    err('incomplete definition', a[1]);
     return;
   }
   if (a[2].t != '=') {
-    a[2].e = 'unexpected token';
+    err('unexpected token', a[2]);
     return;
   }
   if (a.length < 4) {
-    a[2].e = 'incomplete definition';
+    err('incomplete definition', a[2]);
     return;
   }
   if (a[3].t != 'Ur') {
-    a[3].e = a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : 'unexpected token';
+    err(a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : 'unexpected token', a[3]);
     return;
   }
   if (a[3].x[0] == '!' || a[3].x[0] == '+') {
     a[3].t = '!!';
-    if (!symbolDet(a[3].x)) a[3].e = 'unknown symbol';
+    if (!symbolDet(a[3].x)) err('unknown symbol', a[3]);
   }
   else if (a[3].x[0] == '"') a[3].t = '""';
   if (a.length > 4) {
-    a[4].e = 'unexpected token';
+    err('unexpected token', a[4]);
   }
 }
 function reader_U_left(x, q) {
@@ -343,23 +348,23 @@ const reader_U_eq = reader_char('=', reader_U_right);
 function assemble_m(q) {
   var a = q.ass;
   if (a.length < 2) {
-    a[0].e = 'expected: macro';
+    err('expected: macro', a[0]);
     return;
   }
   if (a[1].t != 'ml') {
-    a[1].e = 'unexpected token';
+    err('unexpected token', a[1]);
     return;
   }
   if (a.length < 3) {
-    a[1].e = 'incomplete macro';
+    err('incomplete macro', a[1]);
     return;
   }
   if (a[2].t != '=') {
-    a[2].e = 'unexpected token';
+    err('unexpected token', a[2]);
     return;
   }
   if (a.length < 4) {
-    a[2].e = 'incomplete macro';
+    err('incomplete macro', a[2]);
     return;
   }
 }

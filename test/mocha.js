@@ -26,13 +26,13 @@ describe('tokenize', function() {
       [ { l: 2, c: 0, t: '%', x: '%abc' } ]
     ]);
     P = new Parser(' %abc\n%abc');
-    console.log(P.tokens);
+    //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 1, t: '%', x: '%abc' } ],
       [ { l: 1, c: 0, t: '%:', h: '%:', x: '%abc', e: 'must be the first line' } ],
     ]);
   });
-  it.only('free text', function() {
+  it('free text', function() {
     var P = new Parser('%abc\na %warn\nno %warn');
     //console.log(P.tokens);
     equal(P.tokens, [
