@@ -17,6 +17,8 @@ const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': 
 function _u_def() {
   return { '~': '!roll!', H: '!fermata!', L: '!accent!', M: '!lowermordent!', O: '!coda!', P: '!uppermordent!', S: '!segno!', T: '!trill!', u: '!upbow!', v: '!downbow!' };
 }
+const _UET = 'unexpected token';
+const _MEL = 'missing empty line';
 function _dup(x) {
   var r = {};
   if (x) for (var k of Object.keys(x)) r[k] = x[k];
@@ -55,32 +57,31 @@ function tokens(s, l, c, q) {
       q.field = s[0];
       q.reader = _readers[x];
     }
-    a = _chop(s.substring(2), l, c + 2);
+    a = chop(s.substring(2), l, c + 2);
     if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
     return q.field ? [{ l: l, c: c, t: x, h: q.field + ':', x: x }].concat(a) : [{ l: l, c: c, t: x, e: 'no previous field', x: x }].concat(a);
   }
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
   c += i;
-  if (s[i] == '%') return _percent(s.substring(i), l, c, q);
+  if (s[i] == '%') return read_percent(s.substring(i), l, c, q);
   q.field = undefined;
   x = s.trim();
-  return q.tune && q.tune.key ? _tune(x, l, c, q) : _free(x, l, c, q);
+  return q.tune && q.tune.key ? read_tune(x, l, c, q) : read_free(x, l, c, q);
 }
-function _free(s, l, c, q) {
+function read_free(s, l, c, q) {
   if (!s) return [];
   var a = [];
   var n = 0;
   if (q.last && q.last != '??') {
     n = read_any(s);
-    if (n) a.push({ l: l, c: c, t: '??', x: s.substring(0, n), e: 'missing empty line' });
+    if (n) a.push({ l: l, c: c, t: '??', x: s.substring(0, n), e: _MEL });
   }
   for (; n < s.length; n++) if (!_isSpace(s[n])) break;
   if (n < s.length) a.push({ l: l, c: c + n, t: '??', x: s.substring(n) });
   q.last = '??';
   return a;
 }
-function _tune(s, l, c) {
-  //return [{ l: l, c: c, x: s }];
+function read_tune(s, l, c) {
   var a = [];
   var n, k;
   n = 0;
@@ -104,7 +105,7 @@ function _tune(s, l, c) {
   }
   return a;
 }
-function _chop(s, l, c) {
+function chop(s, l, c) {
   var a = [];
   var i, k, q, x;
   for (i = 0; i < s.length; i++) if (!_isSpace(s[i])) break;
@@ -122,20 +123,29 @@ function _chop(s, l, c) {
   a.push({ l: l, c: c + i, x: s.substring(i).trim() });
   return a;
 }
-function _percent(s, l, c, q) {
-  var i;
+function read_percent(s, l, c, q) {
+  var n, a, e0, e1, x;
   if (!c) {
     if (s[1] == '%') {
-      for (i = 2; i < s.length; i++) if (!_isLetter(s[i])) break;
-      return [{ l: l, c: c, t: '%%', h: s.substring(0, i), x: s.substring(0, i) }].concat(_chop(s.substring(i), l, c + i));
+      if (q.last == '??') e0 = _MEL;
+      q.last = '%%';
+      for (n = 2; n < s.length; n++) if (!_isLetter(s[n]) && !_isDigit(s[n]) && s[n] != '-') break;
+      x = s.substring(2, n);
+      if (!pseudoDet(x)) e1 = 'unknown directive';
+      a = chop(s.substring(n), l, c + n);
+      x = _pseudo[x];
+      if (x) q.reader = x.rdr;
+      x = err(e1, err(e0, { l: l, c: c, t: '%%', h: s.substring(0, n), x: s.substring(0, n) }));
+      if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
+      return [x].concat(a);
     }
     else if (!q.abc && s.startsWith('%abc') && !_isLetter(s[4])) {
       q.abc = true;
       q.last = '%:';
-      return [err(l ? 'must be the first line' : undefined, { l: l, c: c, t: '%:', h: '%:', x: '%abc' })].concat(_chop(s.substring(4), l, c + 4));
+      return [err(l ? 'must be the first line' : undefined, { l: l, c: c, t: '%:', h: '%:', x: '%abc' })].concat(chop(s.substring(4), l, c + 4));
     }
   }
-  return [{ l: l, c: c, t: '%', x: s.trim() }];
+  return [{ l: l, c: c, t: q.last == '??' ? '??' : '%', x: s.trim() }];
 }
 function _add_tune(q) {
   q.tune = {};
@@ -151,7 +161,7 @@ function assemble_X(q) {
   if (a.length > 1) {
     n = parseInt(a[1].x);
     if (a[1].x == n && n >= 0) {
-      if (a.length > 2) err('unexpected token', a[2]);
+      if (a.length > 2) err(_UET, a[2]);
     }
     else {
       err('expected: positive integer', a[1]);
@@ -207,7 +217,7 @@ function assemble_K(q) {
   var K = new Key(m);
   for (; n < a.length; n++) {
     if (a[n].t != 'Ka') {
-      err('unexpected token', a[n]);
+      err(_UET, a[n]);
       return;
     }
     if (!K.setAcc(a[n].x)) err('redundant accidental', a[n]);
@@ -283,7 +293,7 @@ function assemble_U(q) {
     return;
   }
   if (a[1].t != 'Ul') {
-    err('unexpected token', a[1]);
+    err(_UET, a[1]);
     return;
   }
   if (a.length < 3) {
@@ -291,7 +301,7 @@ function assemble_U(q) {
     return;
   }
   if (a[2].t != '=') {
-    err('unexpected token', a[2]);
+    err(_UET, a[2]);
     return;
   }
   if (a.length < 4) {
@@ -299,7 +309,7 @@ function assemble_U(q) {
     return;
   }
   if (a[3].t != 'Ur') {
-    err(a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : 'unexpected token', a[3]);
+    err(a[3].x == '!' ? 'unmatched \'!\'' : a[3].x == '"' ? 'unmatched \'"\'' : _UET, a[3]);
     return;
   }
   if (a[3].x[0] == '!' || a[3].x[0] == '+') {
@@ -308,7 +318,7 @@ function assemble_U(q) {
   }
   else if (a[3].x[0] == '"') a[3].t = '""';
   if (a.length > 4) {
-    err('unexpected token', a[4]);
+    err(_UET, a[4]);
   }
 }
 function reader_U_left(x, q) {
@@ -352,7 +362,7 @@ function assemble_m(q) {
     return;
   }
   if (a[1].t != 'ml') {
-    err('unexpected token', a[1]);
+    err(_UET, a[1]);
     return;
   }
   if (a.length < 3) {
@@ -360,7 +370,7 @@ function assemble_m(q) {
     return;
   }
   if (a[2].t != '=') {
-    err('unexpected token', a[2]);
+    err(_UET, a[2]);
     return;
   }
   if (a.length < 4) {
@@ -517,6 +527,7 @@ function _isMode(s) {
 }
 
 const _pseudo = {
+  '': { det: 'any text' },
   MIDI: {},
   'propagate-accidentals': {},
   'writeout-accidentals': {},
@@ -528,15 +539,15 @@ const _pseudo = {
   rightmargin: { det: 'page format' },
   indent: { det: 'page format' },
   landscape: { det: 'page format' },
-  titlefont: {},
-  subtitlefont: {},
+  titlefont: { det: 'title font' },
+  subtitlefont: { det: 'subtitle font' },
   composerfont: {},
   partsfont: {},
   tempofont: {},
   gchordfont: {},
   annotationfont: {},
   infofont: {},
-  textfont: {},
+  textfont: { det: 'text font' },
   vocalfont: {},
   wordsfont: {},
   'setfont-1': {},
@@ -569,8 +580,8 @@ const _pseudo = {
   setbarnb: {},
   text: {},
   center: {},
-  begintext: {},
-  endtext: {},
+  begintext: { det: 'begin text' },
+  endtext:  { det: 'end text' },
   writefields: {},
   sep: { det: 'horizontal separator' },
   vskip: { det: 'insert vertical space' },
@@ -687,6 +698,9 @@ const _symbols = {
   'editorial': { det: 'editorial accidental' },
   'courtesy': { det: 'courtesy accidental' }
 };
+function pseudoDet(s) {
+  if (_pseudo[s]) return _pseudo[s].det || s;
+}
 function symbolDet(s) {
   var n = s.length - 1;
   if (n < 2 || s[0] != s[n] || s[0] != '!' && s[0] != '+' ) return;
@@ -734,6 +748,7 @@ Parser.prototype.symbols = Parser.symbols = function() {
   for (var k of Object.keys(_symbols)) a.push({ name: k, det: _symbols[k].det });
   return a;
 }
+Parser.prototype.pseudoDet = Parser.pseudoDet = pseudoDet;
 Parser.prototype.symbolDet = Parser.symbolDet = symbolDet;
 
 const _notes = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];

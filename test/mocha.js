@@ -61,10 +61,13 @@ describe('tokenize', function() {
     ]);
   });
   it('pseudocomment', function() {
-    var P = new Parser('%%endtext %');
-    //console.log(P.tokens);
+    var P = new Parser('%%endtext %\n...\n%%unknown\n%%');
+    console.log(P.tokens);
     equal(P.tokens, [
-      [ { l: 0, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 0, c: 10, t: '%', x: '%' } ]
+      [ { l: 0, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 0, c: 10, t: '%', x: '%' } ],
+      [ { l: 1, c: 0, t: '??', x: '...', e: 'missing empty line' } ],
+      [ { l: 2, c: 0, t: '%%', h: '%%unknown', x: '%%unknown', e: 'missing empty line; unknown directive' } ],
+      [ { l: 3, c: 0, t: '%%', h: '%%', x: '%%' } ]
     ]);
   });
   it('+: ...', function() {
