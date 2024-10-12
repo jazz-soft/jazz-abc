@@ -41,10 +41,7 @@ function err(e, x) {
 }
 function collect(tt, q) {
   var t, x;
-  if (!tt.length) {
-    q.last = undefined;
-    q.tune = undefined;
-  }
+  if (!tt.length) reset(q);
   else {
     t = tt[0].t || '';
     if (t != '+:' && t[0] != '%') flush(q);
@@ -57,6 +54,10 @@ function flush(q) {
   var fn = _assemble[q.ass[0].t];
   if (fn) fn(q);
   q.ass = undefined;
+}
+function reset(q) {
+  q.last = undefined;
+  q.tune = undefined;
 }
 
 function tokens(s, l, c, q) {
@@ -135,7 +136,7 @@ function chop(s, l, c) {
   return a;
 }
 function read_percent(s, l, c, q) {
-  var n, a, e0, e1, x;
+  var n, a, e0, e1, x, fn;
   if (!c) {
     if (s[1] == '%') {
       flush(q);
@@ -146,10 +147,20 @@ function read_percent(s, l, c, q) {
       if (!pseudoDet(x)) e1 = 'unknown directive';
       a = chop(s.substring(n), l, c + n);
       x = _pseudo[x];
-      if (x && x.rdr) q.reader = _readers[x.rdr];
+      if (x && x.rdr) {
+        q.reader = _readers[x.rdr];
+        fn = _assemble[x.rdr];
+      }
       x = err(e1, err(e0, { l: l, c: c, t: '%%', h: s.substring(0, n), x: s.substring(0, n) }));
       if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
-      return [x].concat(a);
+      a = [x].concat(a);
+      if (fn) {
+        q.ass = [];
+        for (x of a) if (x.t != '%') q.ass.push(x);
+        fn(q);
+        q.ass = undefined;
+      }
+      return a;
     }
     else if (!q.abc && s.startsWith('%abc') && !_isLetter(s[4])) {
       flush(q);
@@ -197,11 +208,8 @@ function reader_X(x, q) {
 function assemble_K(q) {
   var a = q.ass;
   var n, t, m;
-  if (!q.tune) {
-    err('missing "X: ..."', a[0]);
-    return;
-  }
-  if (!q.tune.key) q.tune.key = new Key();
+  if (!q.tune) err('missing "X: ..."', a[0]);
+  else if (!q.tune.key) q.tune.key = new Key();
   if (a.length < 2) {
     err('expected: key', a[0]);
     return;
@@ -235,7 +243,7 @@ function assemble_K(q) {
     }
     if (!K.setAcc(a[n].x)) err('redundant accidental', a[n]);
   }
-  q.tune.key = K;
+  if (q.tune) q.tune.key = K;
 }
 function reader_K_tonic(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
@@ -451,10 +459,25 @@ function reader_enum(ee, nxt) {
 function assemble_enum(ee) {
   return function(q) {
     var a = q.ass;
+    if (a.length < 2) {
+      err('expected: ' + ee.join('/'), a[0]);
+      return;
+    }
+    if (a[1].t != '$$') {
+      err('expected: ' + ee.join('/'), a[1]);
+      return;
+    }
+    if (a.length > 2) {
+      err(_UET, a[2]);
+    }
   };
 }
 
-function assemble_unexpected(x, q) {
+function assemble_unexpected(q) {
+  var a = q.ass;
+  if (a.length > 1) {
+    err(_UET, a[1]);
+  }
 }
 function reader_unexpected(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
@@ -575,19 +598,19 @@ const _pseudo = {
   landscape: { rdr: 'bool' },
   titlefont: { det: 'title font' },
   subtitlefont: { det: 'subtitle font' },
-  composerfont: {},
-  partsfont: {},
-  tempofont: {},
-  gchordfont: {},
-  annotationfont: {},
-  infofont: {},
+  composerfont: { det: 'composer font' },
+  partsfont: { det: 'parts font' },
+  tempofont: { det: 'tempo font' },
+  gchordfont: { det: 'chords font' },
+  annotationfont: { det: 'annotation font' },
+  infofont: { det: 'info font' },
   textfont: { det: 'text font' },
-  vocalfont: {},
-  wordsfont: {},
-  'setfont-1': {},
-  'setfont-2': {},
-  'setfont-3': {},
-  'setfont-4': {},
+  vocalfont: { det: 'vocal font' },
+  wordsfont: { det: 'words font' },
+  'setfont-1': { det: '$1 font' },
+  'setfont-2': { det: '$2 font' },
+  'setfont-3': { det: '$3 font' },
+  'setfont-4': { det: '$4 font' },
   topspace: {},
   titlespace: {},
   subtitlespace: {},
@@ -733,6 +756,7 @@ const _symbols = {
   'courtesy': { det: 'courtesy accidental' }
 };
 function pseudoDet(s) {
+  if (s.startsWith('%%')) s = s.substring(2); 
   if (_pseudo[s]) return _pseudo[s].det || s;
   var a = s.split(':');
   if (a.length == 2 && a[0].length && a[1].length) return 'app-specific';

@@ -71,13 +71,22 @@ describe('tokenize', function() {
     ]);
   });
   it('pseudocomment bool', function() {
-    var P = new Parser('%%landscape true\n%%landscape false\n%%landscape not sure %!\n%%landscape true, maybe');
+    var P = new Parser('%%landscape true\n%%landscape false\n%%landscape not sure %!\n%%landscape true, maybe\n%%landscape');
     //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 0, c: 12, t: '$$', x: 'true' } ],
       [ { l: 1, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 1, c: 12, t: '$$', x: 'false' } ],
-      [ { l: 2, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 2, c: 12, x: 'not' }, { l: 2, c: 16, x: 'sure' }, { l: 2, c: 21, t: '%', x: '%!' } ],
-      [ { l: 3, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 3, c: 12, t: '$$', x: 'true' }, { l: 3, c: 16, x: ',' }, { l: 3, c: 18, x: 'maybe' } ]
+      [ { l: 2, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 2, c: 12, x: 'not', e: 'expected: true/false' }, { l: 2, c: 16, x: 'sure' }, { l: 2, c: 21, t: '%', x: '%!' } ],
+      [ { l: 3, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 3, c: 12, t: '$$', x: 'true' }, { l: 3, c: 16, x: ',', e: 'unexpected token' }, { l: 3, c: 18, x: 'maybe' } ],
+      [ { l: 4, c: 0, t: '%%', h: '%%landscape', x: '%%landscape', e: 'expected: true/false' } ]
+    ]);
+  });
+  it('pseudocomment none', function() {
+    var P = new Parser('%%newpage\n%%newpage? ?');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: '%%', h: '%%newpage', x: '%%newpage' } ],
+      [ { l: 1, c: 0, t: '%%', h: '%%newpage', x: '%%newpage' }, { l: 1, c: 9, x: '?', e: 'unexpected token' }, { l: 1, c: 11, x: '?' } ]
     ]);
   });
   it('+: ...', function() {
@@ -300,7 +309,7 @@ describe('key', function() {
     var P = new Parser('K: % no key');
     //console.log(P.tokens);
     equal(P.tokens, [[
-      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'missing "X: ..."' },
+      { l: 0, c: 0, t: 'K:', h: 'K:', x: 'K:', e: 'missing "X: ..."; expected: key' },
       { l: 0, c: 3, t: '%', x: '% no key' }
     ]]);
   });
@@ -450,7 +459,8 @@ describe('etc', function() {
     assert.equal(o['newpage'], 'new page');
   });
   it('pseudoDet()', function() {
-    assert.equal(Parser.pseudoDet(''), 'any text');
+    assert.equal(Parser.pseudoDet('%%'), 'any text');
+    assert.equal(Parser.pseudoDet('landscape'), 'landscape');
     assert.equal(Parser.pseudoDet('app:specific'), 'app-specific');
     assert.equal(Parser.pseudoDet('app::specific'), undefined);
   });
