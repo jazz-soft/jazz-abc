@@ -62,12 +62,22 @@ describe('tokenize', function() {
   });
   it('pseudocomment', function() {
     var P = new Parser('%%endtext %\n...\n%%unknown\n%%');
-    console.log(P.tokens);
+    //console.log(P.tokens);
     equal(P.tokens, [
       [ { l: 0, c: 0, t: '%%', h: '%%endtext', x: '%%endtext' }, { l: 0, c: 10, t: '%', x: '%' } ],
       [ { l: 1, c: 0, t: '??', x: '...', e: 'missing empty line' } ],
       [ { l: 2, c: 0, t: '%%', h: '%%unknown', x: '%%unknown', e: 'missing empty line; unknown directive' } ],
       [ { l: 3, c: 0, t: '%%', h: '%%', x: '%%' } ]
+    ]);
+  });
+  it('pseudocomment bool', function() {
+    var P = new Parser('%%landscape true\n%%landscape false\n%%landscape not sure %!\n%%landscape true, maybe');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 0, c: 12, t: '$$', x: 'true' } ],
+      [ { l: 1, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 1, c: 12, t: '$$', x: 'false' } ],
+      [ { l: 2, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 2, c: 12, x: 'not' }, { l: 2, c: 16, x: 'sure' }, { l: 2, c: 21, t: '%', x: '%!' } ],
+      [ { l: 3, c: 0, t: '%%', h: '%%landscape', x: '%%landscape' }, { l: 3, c: 12, t: '$$', x: 'true' }, { l: 3, c: 16, x: ',' }, { l: 3, c: 18, x: 'maybe' } ]
     ]);
   });
   it('+: ...', function() {
@@ -437,7 +447,12 @@ describe('etc', function() {
   it('pseudo', function() {
     var o = {};
     for (var x of Parser.pseudo()) o[x.name] = x.det;
-    assert.equal(o['newpage'], 'start a new page');
+    assert.equal(o['newpage'], 'new page');
+  });
+  it('pseudoDet()', function() {
+    assert.equal(Parser.pseudoDet(''), 'any text');
+    assert.equal(Parser.pseudoDet('app:specific'), 'app-specific');
+    assert.equal(Parser.pseudoDet('app::specific'), undefined);
   });
   it('fields', function() {
     var o = {};

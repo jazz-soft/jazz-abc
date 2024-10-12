@@ -12,8 +12,18 @@ function Parser(s) {
   }
   flush(state);
 }
-const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left };
-const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m };
+const _readers = { 'X:': reader_X, 'K:': reader_K_tonic, 'U:': reader_U_left, 'm:': reader_m_left,
+  'bool': reader_enum(['true', 'false']),
+  'pr-acc': reader_enum(['not', 'octave', 'pitch']),
+  'wr-acc': reader_enum(['none', 'added', 'all']),
+  'none': reader_unexpected
+};
+const _assemble = { 'X:': assemble_X, 'K:': assemble_K, 'U:': assemble_U, 'm:': assemble_m,
+  'bool': assemble_enum(['true', 'false']),
+  'pr-acc': assemble_enum(['not', 'octave', 'pitch']),
+  'wr-acc': assemble_enum(['none', 'added', 'all']),
+  'none': assemble_unexpected
+};
 function _u_def() {
   return { '~': '!roll!', H: '!fermata!', L: '!accent!', M: '!lowermordent!', O: '!coda!', P: '!uppermordent!', S: '!segno!', T: '!trill!', u: '!upbow!', v: '!downbow!' };
 }
@@ -32,8 +42,8 @@ function err(e, x) {
 function collect(tt, q) {
   var t, x;
   if (!tt.length) {
-    flush(q);
     q.last = undefined;
+    q.tune = undefined;
   }
   else {
     t = tt[0].t || '';
@@ -65,6 +75,7 @@ function tokens(s, l, c, q) {
   c += i;
   if (s[i] == '%') return read_percent(s.substring(i), l, c, q);
   q.field = undefined;
+  flush(q);
   x = s.trim();
   return q.tune && q.tune.key ? read_tune(x, l, c, q) : read_free(x, l, c, q);
 }
@@ -127,19 +138,21 @@ function read_percent(s, l, c, q) {
   var n, a, e0, e1, x;
   if (!c) {
     if (s[1] == '%') {
+      flush(q);
       if (q.last == '??') e0 = _MEL;
       q.last = '%%';
-      for (n = 2; n < s.length; n++) if (!_isLetter(s[n]) && !_isDigit(s[n]) && s[n] != '-') break;
+      for (n = 2; n < s.length; n++) if (!_isLetter(s[n]) && !_isDigit(s[n]) && s[n] != '-' && s[n] != ':') break;
       x = s.substring(2, n);
       if (!pseudoDet(x)) e1 = 'unknown directive';
       a = chop(s.substring(n), l, c + n);
       x = _pseudo[x];
-      if (x) q.reader = x.rdr;
+      if (x && x.rdr) q.reader = _readers[x.rdr];
       x = err(e1, err(e0, { l: l, c: c, t: '%%', h: s.substring(0, n), x: s.substring(0, n) }));
       if (q.reader && a.length && a[0].t != '%') a = q.reader(a[0], q).concat(a.slice(1));
       return [x].concat(a);
     }
     else if (!q.abc && s.startsWith('%abc') && !_isLetter(s[4])) {
+      flush(q);
       q.abc = true;
       q.last = '%:';
       return [err(l ? 'must be the first line' : undefined, { l: l, c: c, t: '%:', h: '%:', x: '%abc' })].concat(chop(s.substring(4), l, c + 4));
@@ -421,7 +434,28 @@ function reader_rest(tt, nxt) {
     return [{ l: x.l, c: x.c, t: tt, x: x.x.trim() }];
   };
 }
+function reader_enum(ee, nxt) {
+  return function(x, q) {
+    var a = [], s = x.x, l = x.l, c = x.c;
+    var n = read_any(s);
+    var w = s.substring(0, n);
+    if (ee.includes(w)) a.push({ l: l, c: c, t: '$$', x: w });
+    else n = 0;
+    q.reader = reader_unexpected;
+    for (; n < s.length; n++) if (!_isSpace(s[n])) break;
+    if (n < s.length) a = a.concat(q.reader({ l: l, c: c + n, x: s.substring(n) }, q));
+    q.reader = nxt;
+    return a;
+  };
+}
+function assemble_enum(ee) {
+  return function(q) {
+    var a = q.ass;
+  };
+}
 
+function assemble_unexpected(x, q) {
+}
 function reader_unexpected(x, q) {
   var a = [], s = x.x, l = x.l, c = x.c;
   var n = read_any(s);
@@ -437,7 +471,7 @@ function read_symbol(s) { // !...!
   var n, c;
   for (n = 1; n < s.length; n++) {
     c = s[n];
-    if (c == '!') return n > 1 ? n + 1 : 0; 
+    if (c == '!') return n > 1 ? n + 1 : 0;
     if (_isSpace(c)) break;
   }
   return 0;
@@ -447,7 +481,7 @@ function read_depr_symbol(s) { // +...+ // deprecated
   var n, c;
   for (n = 1; n < s.length; n++) {
     c = s[n];
-    if (c == '+') return n > 1 ? n + 1 : 0; 
+    if (c == '+') return n > 1 ? n + 1 : 0;
     if (_isSpace(c)) break;
   }
   return 0;
@@ -457,7 +491,7 @@ function read_quoted(s) { // "..."
   var n, c;
   for (n = 1; n < s.length; n++) {
     c = s[n];
-    if (c == '"') return n + 1; 
+    if (c == '"') return n + 1;
   }
   return 0;
 }
@@ -529,16 +563,16 @@ function _isMode(s) {
 const _pseudo = {
   '': { det: 'any text' },
   MIDI: {},
-  'propagate-accidentals': {},
-  'writeout-accidentals': {},
-  pageheight: { det: 'page format' },
-  pagewidth: { det: 'page format' },
-  topmargin: { det: 'page format' },
-  botmargin: { det: 'page format' },
-  leftmargin: { det: 'page format' },
-  rightmargin: { det: 'page format' },
+  'propagate-accidentals': { det: 'propagate accidentals', rdr: 'pr-acc' },
+  'writeout-accidentals': { det: 'writeout accidentals', rdr: 'wr-acc' },
+  pageheight: { det: 'page height' },
+  pagewidth: { det: 'page width' },
+  topmargin: { det: 'top margin' },
+  botmargin: { det: 'bottom margin' },
+  leftmargin: { det: 'left margin' },
+  rightmargin: { det: 'right margin' },
   indent: { det: 'page format' },
-  landscape: { det: 'page format' },
+  landscape: { rdr: 'bool' },
   titlefont: { det: 'title font' },
   subtitlefont: { det: 'subtitle font' },
   composerfont: {},
@@ -569,31 +603,31 @@ const _pseudo = {
   barsperstaff: {},
   parskipfac: {},
   lineskipfac: {},
-  stretchstaff: {},
-  stretchlast: {},
+  stretchstaff: { rdr: 'bool' },
+  stretchlast: { rdr: 'bool' },
   maxshrink: {},
   scale: {},
   measurefirst: {},
   barnumbers: {},
   measurenb: {},
-  measurebox: {},
+  measurebox: { rdr: 'bool' },
   setbarnb: {},
   text: {},
   center: {},
-  begintext: { det: 'begin text' },
-  endtext:  { det: 'end text' },
+  begintext: { det: 'begin text', rdr: 'none' },
+  endtext:  { det: 'end text', rdr: 'none' },
   writefields: {},
-  sep: { det: 'horizontal separator' },
-  vskip: { det: 'insert vertical space' },
-  newpage: { det: 'start a new page' },
-  exprabove: {},
-  exprbelow: {},
-  graceslurs: {},
-  infoline: {},
-  oneperpage: {},
-  vocalabove: {},
-  freegchord: {},
-  printtempo: {}
+  sep: { det: 'horizontal separator', rdr: 'none' },
+  vskip: { det: 'vertical space', rdr: 'none' },
+  newpage: { det: 'new page', rdr: 'none' },
+  exprabove: { rdr: 'bool' },
+  exprbelow: { rdr: 'bool' },
+  graceslurs: { rdr: 'bool' },
+  infoline: { rdr: 'bool' },
+  oneperpage: { rdr: 'bool' },
+  vocalabove: { rdr: 'bool' },
+  freegchord: { rdr: 'bool' },
+  printtempo: { rdr: 'bool' }
 };
 
 const _fields = {
@@ -617,7 +651,7 @@ const _fields = {
   r: { det: 'remark' },
   S: { det: 'source' },
   s: { det: 'symbol line' },
-  T: { det: 'tune title' },
+  T: { det: 'title' },
   U: { det: 'user defined' },
   V: { det: 'voice' },
   W: { det: 'words' },
@@ -700,6 +734,8 @@ const _symbols = {
 };
 function pseudoDet(s) {
   if (_pseudo[s]) return _pseudo[s].det || s;
+  var a = s.split(':');
+  if (a.length == 2 && a[0].length && a[1].length) return 'app-specific';
 }
 function symbolDet(s) {
   var n = s.length - 1;
