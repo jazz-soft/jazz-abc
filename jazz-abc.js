@@ -59,7 +59,7 @@ function reset(q) {
   q.tune = undefined;
 }
 function state(l, c, q) {
-  return { l: l, c: c, t: '!!', x: '', '#': { key: q.tune.key } };
+  return { l: l, c: c, t: '!?', x: '', '#': { key: q.tune.key } };
 }
 
 function tokens(s, l, c, q) {
