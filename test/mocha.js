@@ -11,7 +11,7 @@ function equal(a, b) {
   else if (typeof a == 'object') {
     assert.equal(typeof b, 'object');
     assert.equal(Object.keys(a).length, Object.keys(b).length);
-    for (k of Object.keys(a)) equal(a[k], b[k]);
+    for (k of Object.keys(a)) if (k != '#') equal(a[k], b[k]);
   }
   else assert.equal(a, b);
 }
@@ -413,6 +413,32 @@ describe('key', function() {
     assert.equal(k.scale['f'], 7);
     assert.equal(k.setAcc('__f'), true);
     assert.equal(k.scale['f'], 6);
+  });
+});
+
+describe('tune', function() {
+  it('empty', function() {
+    var P = new Parser('X:\nK:C\n');
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' }, { l: 1, c: 2, t: 'Kt', x: 'C' } ],
+      [ { l: 2, c: 0, t: '!!', x: '', '#': true } ]
+    ]);
+    //console.log(P.tokens[2][0]['#']);
+    assert.equal(P.tokens[2][0].c, 0);
+    assert.equal(P.tokens[2][0].t, '!!');
+    assert.equal(P.tokens[2][0]['#'].key.sharps, 0);
+    assert.equal(Parser.getKey(P.tokens[2][0]).sharps, 0);
+  });
+  it("A_B,c''", function() {
+    var P = new Parser("X:\nK:C\nA_B,c''");
+    //console.log(P.tokens);
+    equal(P.tokens, [
+      [ { l: 0, c: 0, t: 'X:', h: 'X:', x: 'X:' } ],
+      [ { l: 1, c: 0, t: 'K:', h: 'K:', x: 'K:' }, { l: 1, c: 2, t: 'Kt', x: 'C' } ],
+      [ { l: 2, c: 0, t: '!!', x: '', '#': true }, { l: 2, c: 0, t: 'note', x: 'A' }, { l: 2, c: 1, t: 'note', x: '_B,' }, { l: 2, c: 4, t: 'note', x: "c''" } ]
+    ]);
   });
 });
 

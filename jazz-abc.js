@@ -41,10 +41,9 @@ function err(e, x) {
 }
 function collect(tt, q) {
   var t, x;
-  if (!tt.length) reset(q);
-  else {
+  if (tt.length) {
     t = tt[0].t || '';
-    if (t != '+:' && t[0] != '%') flush(q);
+    if (t != '+:' && t != '%') flush(q);
     if (!q.ass && _assemble[t]) q.ass = [];
     if (q.ass) for (x of tt) if (!x.t || x.t != '+:' && x.t[0] != '%') q.ass.push(x);
   }
@@ -58,6 +57,9 @@ function flush(q) {
 function reset(q) {
   q.last = undefined;
   q.tune = undefined;
+}
+function state(l, c, q) {
+  return { l: l, c: c, t: '!!', x: '', '#': { key: q.tune.key } };
 }
 
 function tokens(s, l, c, q) {
@@ -78,7 +80,9 @@ function tokens(s, l, c, q) {
   q.field = undefined;
   flush(q);
   x = s.trim();
-  return q.tune && q.tune.key ? read_tune(x, l, c, q) : read_free(x, l, c, q);
+  a = q.tune && q.tune.key ? read_tune(x, l, c, q) : read_free(x, l, c, q);
+  if (!x) reset(q);
+  return a;
 }
 function read_free(s, l, c, q) {
   if (!s) return [];
@@ -93,8 +97,15 @@ function read_free(s, l, c, q) {
   q.last = '??';
   return a;
 }
-function read_tune(s, l, c) {
-  var a = [];
+function read_tune(s, l, c, q) {
+  if (!s) return [state(l, 0, q)];
+  var a = chop(s, l, c);
+  var comm;
+  if (a.length > 1) {
+    s = a[0].x;
+    comm = a[1];
+  }
+  a = [state(l, 0, q)];
   var n, k;
   n = 0;
   while (n < s.length) {
@@ -115,6 +126,7 @@ function read_tune(s, l, c) {
       n++;
     }
   }
+  if (comm) a.push(comm);
   return a;
 }
 function chop(s, l, c) {
@@ -931,6 +943,7 @@ Key.prototype.setAcc = function(s) {
 }
 
 Parser.prototype.Key = Parser.Key = Key;
+Parser.prototype.getKey = Parser.getKey = function(x) { return x['#'].key; };
 
 module.exports = {
   Parser: Parser
